@@ -1,2 +1,2 @@
-# Razvery-refactoring
-Lua Game Engine Project. SDL2 + Lua.Razvery-refacted ver
+Lua + SDL2 GameEngine Project
+ゲームエンジンを作るプロジェクト。
