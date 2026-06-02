@@ -371,4 +371,14 @@ public:
         SDL_SetRenderTarget(ren, nullptr);
 		SDL_SetTextureBlendMode(fileIcon, SDL_BLENDMODE_BLEND);
     }
+    void drw_file_explorer(File_explorer& f){
+        SDL_SetRenderDrawColor(ren,200,200,200,255);
+        SDL_RenderFillRect(ren,&f.size);
+        TextBoxsh(f.path_box_ed);
+        if(f.update){
+            std::cout << "update!" << std::endl;
+            f.update = false;
+        }
+        
+    }
 };

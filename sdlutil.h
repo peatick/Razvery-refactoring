@@ -566,12 +566,14 @@ struct file_enum{
 
 class File_explorer{
 public:
+    SDL_Rect size = {0,0,200,200};
     std::vector<file_enum> file_list;
     fs::path path_box = fs::current_path();
     Uint32 last_update = 0;
-    Uint32 update_delay = 500;
+    Uint32 update_delay = 1500;
     bool update = false;
     int scrollrow = 0;
+    Editor path_box_ed;
     void tickupdate(){
         Uint32 now = SDL_GetTicks();
         if (now - last_update > update_delay){
@@ -601,4 +603,28 @@ public:
             std::cerr << "filesystem error: " << e.what() << "\n";
         }
     }
-};
+    void init(int lineH){
+        path_box_ed.set_init({size.x,size.y,size.w,25},path_box.string(),lineH);
+        path_box_ed.PADDING = 5;
+        file_lister();
+    }
+    void path_box_set(){
+        std::string ln = path_box_ed.buf.line(0);
+        std::u8string u8 = reinterpret_cast<const char8_t*>(ln.c_str());
+        fs::path temp_path(u8);
+        fs::path abs_path;
+        if(fs::exists(temp_path)){
+            try {
+                abs_path = fs::absolute(temp_path);
+            }catch (const fs::filesystem_error& e) {
+                std::cerr << "Error accessing path: " << e.what() << std::endl;
+                return;
+            }
+            path_box = temp_path;
+        }
+        std::u8string tex = path_box.u8string();
+        path_box_ed.buf.setAllText(std::string(reinterpret_cast<const char*>(tex.c_str())));
+        path_box_ed.cursor = { 0,0 };
+        file_lister();
+    }
+};  
