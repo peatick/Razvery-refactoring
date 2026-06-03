@@ -94,6 +94,12 @@ public:
         SDL_RenderCopy(ren, tex, nullptr, &dst);
         SDL_DestroyTexture(tex);
     }
+    void drawtexture(SDL_Texture* tex, int x, int y) {
+        if (!tex) return;
+        int w, h; SDL_QueryTexture(tex, nullptr, nullptr, &w, &h);
+        SDL_Rect dst = { x,y,w,h };
+        SDL_RenderCopy(ren, tex, nullptr, &dst);
+    }
     void drawsmlText(const std::string& s, int x, int y, SDL_Color col) {
         if (s.empty()) return;
         SDL_Surface* surf = TTF_RenderUTF8_Blended(font_sml, s.c_str(), col);
@@ -371,14 +377,83 @@ public:
         SDL_SetRenderTarget(ren, nullptr);
 		SDL_SetTextureBlendMode(fileIcon, SDL_BLENDMODE_BLEND);
     }
+    void drawtexture_clip(SDL_Texture* tex, int x, int y,int clip_w, int clip_h) {
+        if (!tex) return;
+        int w, h; SDL_QueryTexture(tex, nullptr, nullptr, &w, &h);
+		if (clip_w < w) w = clip_w;
+        if (clip_h < h) h = clip_h;
+		if (clip_w >= w) clip_w = w;
+        if (clip_h >= h) clip_h = h;
+        SDL_Rect dst = { x,y,w,h };
+		SDL_Rect clip = { 0,0,clip_w,clip_h };
+        SDL_RenderCopy(ren, tex, &clip, &dst);
+    }
+    void update_fs_cache(File_explorer& f) {
+        if(!f.fs_text_cache_dirty) return;
+        // Implementation for updating file system cache
+        f.fs_text_cache_dirty = false;
+		for (auto& [_, tex] : f.fs_text_cache) {
+			SDL_DestroyTexture(tex);
+		}
+		f.fs_text_cache.clear();
+		for (const auto& fe : f.file_list) {
+			std::string filename;
+			f.filename2string(fe.file_path, filename);
+			SDL_Surface* surf = TTF_RenderUTF8_Blended(font, filename.c_str(), { 10,10,10,255 });
+			if (!surf) continue;
+			SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, surf);
+			SDL_FreeSurface(surf);
+			if (!tex) continue;
+			f.fs_text_cache[filename] = tex;
+		}
+    }
+	void fs_texture_init(File_explorer& f) {
+		std::string bka = "<-";
+		SDL_Surface* surf = TTF_RenderUTF8_Blended(font, bka.c_str(), {10,10,10,255});
+		if (!surf) return;
+		SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, surf);
+		SDL_FreeSurface(surf);
+		if (!tex) return;
+		f.back_arrw_tex = tex;
+        f.Selected_rect_tex = SDL_CreateTexture(ren, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, f.size.w, 20);
+        SDL_SetRenderTarget(ren, f.Selected_rect_tex);
+        SDL_SetRenderDrawColor(ren, 0, 0, 0, 0);
+        SDL_RenderClear(ren);
+        SDL_SetRenderDrawColor(ren, 71, 190, 255, 255);
+		SDL_Rect r = { 0,0,f.size.w,20 };
+		SDL_RenderFillRect(ren, &r);
+        SDL_SetRenderTarget(ren, nullptr);
+        SDL_SetTextureBlendMode(f.Selected_rect_tex, SDL_BLENDMODE_BLEND);
+	}
     void drw_file_explorer(File_explorer& f){
         SDL_SetRenderDrawColor(ren,200,200,200,255);
         SDL_RenderFillRect(ren,&f.size);
-        TextBoxsh(f.path_box_ed);
         if(f.update){
-            std::cout << "update!" << std::endl;
             f.update = false;
         }
-        
+		int start_x = f.size.x + 25;
+		int start_y = f.size.y + 30;
+        int viewRow = (f.size.h - f.under_box.h - 30) / 20;
+		SDL_Color textC = { 10,10,10,255 };
+		update_fs_cache(f);
+		std::string path_str;
+        for (int i = 0; i < f.file_list.size(); i++) {
+            if (viewRow - 1 < i) break;
+            if (i + f.scrollrow < f.file_list.size()) {
+				if (f.file_list[i + f.scrollrow].selected) {
+					drawtexture(f.Selected_rect_tex, f.size.x, start_y + (i * 20));
+				}
+                if (f.file_list[i + f.scrollrow].isDir) {
+					drawtexture(folderIcon, f.size.x + 5, start_y + (i * 20) + 2);
+                }
+                else {
+					drawtexture(fileIcon, f.size.x + 5, start_y + (i * 20) + 2);
+                }
+                f.filename2string(f.file_list[i +f.scrollrow].file_path, path_str);
+				drawtexture_clip(f.fs_text_cache[path_str], start_x, start_y + (i * 20), f.size.w - start_x, 20);
+            }
+        }
+        TextBoxsh(f.path_box_ed);
+        drawtexture(f.back_arrw_tex, f.size.x + 10, f.size.y + 5);
     }
 };

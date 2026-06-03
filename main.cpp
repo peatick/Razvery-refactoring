@@ -21,6 +21,7 @@ int main(int argc, char* argv[]) {
 	Widget w;
     File_explorer f_e;
     f_e.init(renderer.lineH);
+    renderer.fs_texture_init(f_e);
 	w.widget_editor.set_init({ 10, 20, 600, 400 }, "Hello, SDL2!", renderer.lineH);
 	w.widget_rect = { 10, 20, 600, 400 };
     w.widget_layer = 1;
@@ -33,6 +34,8 @@ int main(int argc, char* argv[]) {
     bool running = true, mouseDown = false;
     handler.rend = &renderer;
     handler.mb = &mouseDown;
+	SDL_Point now_mouse_P = { mousex, mousey };
+	handler.nmP = &now_mouse_P;
     while (running) {
         SDL_Event e;
         handler.ev = &e;
@@ -50,18 +53,13 @@ int main(int argc, char* argv[]) {
             }
 			mouseDown = (e.type == SDL_MOUSEBUTTONDOWN) ? true : (e.type == SDL_MOUSEBUTTONUP) ? false : mouseDown;
 			renderer.mouse_logical_pos(mousex, mousey);
-            //handler.textEditEvent_w_t(w,w_mgr);
+            now_mouse_P = { mousex, mousey };
             handler.textEditEvent_sh(f_e.path_box_ed,true);
+            handler.File_explorer_Event(f_e);
         }
         renderer.draw_bg({250,250,250,255});
         renderer.TextBox(w.widget_editor);
         renderer.drw_file_explorer(f_e);
-
-
-        SDL_Rect dst = {20,20,20,20};
-        SDL_RenderCopy(renderer.ren, renderer.folderIcon, nullptr, &dst);
-        dst.x = 50;
-		SDL_RenderCopy(renderer.ren, renderer.fileIcon, nullptr, &dst);
         f_e.tickupdate();
         renderer.rend();
     }

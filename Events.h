@@ -7,11 +7,26 @@ public:
     Renderer* rend = nullptr;
     bool* mb = nullptr;
     SDL_Point* mP = nullptr;
+    SDL_Point* nmP = nullptr;
     bool nl_check(){
-        if(ev == nullptr || rend == nullptr || mb == nullptr || mP == nullptr){
+        if(ev == nullptr || rend == nullptr || mb == nullptr || mP == nullptr || nmP == nullptr){
            return false; 
         }
         return true;
+    }
+    bool L_click() {
+		if (!nl_check()) {
+			return false;
+		}
+		SDL_Event& e = *ev;
+		return e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT;
+    }
+    bool L_clicks(int c) {
+        if (!nl_check()) {
+            return false;
+        }
+        SDL_Event& e = *ev;
+        return e.type == SDL_MOUSEBUTTONDOWN && e.button.clicks == c && e.button.button == SDL_BUTTON_LEFT;
     }
     void textEditEvent(SDL_Event& e, Editor& ed, Renderer& renderer, bool& mouseDown, SDL_Point mouse_P, bool handler)
     {
@@ -266,6 +281,64 @@ public:
             ed.tickBlink();
         }
     }
+    void File_explorer_Event(File_explorer& f) {
+        if (!nl_check()) return;
+        SDL_Event& e = *ev;
+        Renderer& renderer = *rend;
+        bool& mouseDown = *mb;
+        SDL_Point& mouse_P = *mP;
+		SDL_Point& nm_P = *nmP;
+        bool hover = SDL_PointInRect(&nm_P, &f.size);
+        if (!hover) {
+            if (L_click()) {
+                for (auto& file : f.file_list) {
+                    file.selected = false;
+                }
+            }
+            return;
+        }
+        int nm_x = e.button.x;
+        int nm_y = e.button.y;
+        int key = e.key.keysym.sym, mod = e.key.keysym.mod;
+        switch (e.type) {
+        case SDL_MOUSEWHEEL:
+            f.scrollrow = std::clamp(f.scrollrow - e.wheel.y, 0, int(f.file_list.size() - 1));
+            break;
+        }
+        switch (key) {
+        case SDLK_RETURN:
+        case SDLK_KP_ENTER:
+            f.path_set("");
+            break;
+        }
+        int start_y = f.size.y + 30;
+        int viewRow = (f.size.h - f.under_box.h - 30) / 20;
+        SDL_Rect view_rect = { f.size.x, start_y, f.size.w, viewRow * 20 };
+        if (SDL_PointInRect(&nm_P, &view_rect)) {
+            SDL_Rect click_rect;
+            if (L_click()) {
+                for (int i = 0; i < f.file_list.size(); i++) {
+                    if (viewRow - 1 < i) break;
+                    if (!(i + f.scrollrow < f.file_list.size())) break;
+                    click_rect = { f.size.x, start_y + i * 20, f.size.w, 20 };
+                    if(SDL_PointInRect(&nm_P, &click_rect)){
+						for (auto& file : f.file_list) {
+							file.selected = false;
+						}
+                        f.file_list[i + f.scrollrow].selected = true;
+                        break;
+                    }
+                }
+            }
+        }
+        else {
+            if (L_click()) {
+                for (auto& file : f.file_list) {
+                    file.selected = false;
+                }
+            }
+        }
+    }
     void textEditEvent_w(SDL_Event& e, Widget& w, Renderer& renderer, bool& mouseDown, SDL_Point mouse_P, WidgetManager& w_mgr)
     {
         bool select = w_mgr.Widget_event(mouse_P,true) == w.widget_layer;
@@ -407,7 +480,7 @@ public:
         int nm_x = e.button.x;
         int nm_y = e.button.y;
         switch (e.type) {
-        case SDL_KEYDOWN: {
+            case SDL_KEYDOWN: {
             if (!select) {
                 break;
             }
@@ -525,5 +598,4 @@ public:
             ed.tickBlink();
         }
     }
-
 };

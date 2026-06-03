@@ -562,11 +562,15 @@ struct Editors {
 
 struct file_enum{
     fs::path file_path;
+	bool selected = false;
+	bool isDir = false;
 };
+
 
 class File_explorer{
 public:
     SDL_Rect size = {0,0,200,200};
+	SDL_Rect under_box = { size.x,size.y + size.h - 40,size.w, 40 };
     std::vector<file_enum> file_list;
     fs::path path_box = fs::current_path();
     Uint32 last_update = 0;
@@ -574,6 +578,12 @@ public:
     bool update = false;
     int scrollrow = 0;
     Editor path_box_ed;
+	//rendererにキャッシュするテクスチャのマップ
+    std::unordered_map<std::string, SDL_Texture*> fs_text_cache;
+	SDL_Texture* back_arrw_tex = nullptr;
+	SDL_Texture* Selected_rect_tex = nullptr;
+	bool fs_text_cache_dirty = true; // キャッシュが最新でない場合
+
     void tickupdate(){
         Uint32 now = SDL_GetTicks();
         if (now - last_update > update_delay){
@@ -594,6 +604,7 @@ public:
             for (auto& f : fs::directory_iterator(path_box)) {
                 file_enum fe;
                 fe.file_path = f.path();
+				fe.isDir = fs::is_directory(f.path());
                 file_list.push_back(fe);
             }
             file_sort();
@@ -608,11 +619,18 @@ public:
         path_box_ed.PADDING = 5;
         file_lister();
     }
-    void path_box_set(){
-        std::string ln = path_box_ed.buf.line(0);
+    void path_set(std::string p){
+        std::string ln;
+        if (p.empty()) {
+            ln = path_box_ed.buf.line(0);
+        }
+        else {
+            ln = p;
+        }
         std::u8string u8 = reinterpret_cast<const char8_t*>(ln.c_str());
         fs::path temp_path(u8);
         fs::path abs_path;
+		fs::path before_path = path_box;
         if(fs::exists(temp_path)){
             try {
                 abs_path = fs::absolute(temp_path);
@@ -621,10 +639,21 @@ public:
                 return;
             }
             path_box = temp_path;
+			fs_text_cache_dirty = true; // パスが変わったのでキャッシュを更新する必要がある 
+			
+            
         }
         std::u8string tex = path_box.u8string();
         path_box_ed.buf.setAllText(std::string(reinterpret_cast<const char*>(tex.c_str())));
         path_box_ed.cursor = { 0,0 };
+		scrollrow = 0;
         file_lister();
     }
+	void u8string_to_path(const std::u8string& u8, fs::path& p) {
+		p = fs::path(std::string(reinterpret_cast<const char*>(u8.c_str())));
+	}
+	void filename2string(const fs::path& p, std::string& str) {
+        std::u8string u8temp = p.filename().u8string();
+        str = std::string(reinterpret_cast<const char*>(u8temp.c_str()));
+	}
 };  
