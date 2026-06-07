@@ -459,12 +459,13 @@ public:
     }
     void drw_button(Widget_button& b) {
 		if (b.button.text_texture == nullptr) b.button.text_texture = text_texture(b.button.btn_name);
-		SDL_SetRenderDrawColor(ren, 200, 200, 200, 255);
+		SDL_SetRenderDrawColor(ren, 220, 220, 220, 255);
 		SDL_RenderFillRect(ren, &b.widget_rect);
         if (!b.button.text_texture) return;
 		int w, h; SDL_QueryTexture(b.button.text_texture, nullptr, nullptr, &w, &h);
 		int x = b.widget_rect.x + (b.widget_rect.w - w) / 2;
-
+		SDL_Rect draw_rect = { x, b.widget_rect.y + (b.widget_rect.h - h) / 2, w, h };
+		SDL_RenderCopy(ren, b.button.text_texture, nullptr, &draw_rect);
 	}
     void destroy_button(Widget_button& b) {
         if (b.button.text_texture) {

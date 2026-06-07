@@ -31,6 +31,13 @@ int main(int argc, char* argv[]) {
 	w_mgr.addWidget(w_ed);
 	w_mgr.addWidget(w_explorer);
 	renderer.init_icon_tex();
+	UI_Btn btn;
+	btn.btn_name = "Click me!";
+	Widget_button w_btn;
+	w_btn.button = btn;
+	w_btn.widget_rect = { 10, 10, 180, 30 };
+
+
     int mx = 0;
     int my = 0;
 	int mousex = 0, mousey = 0;
@@ -64,9 +71,11 @@ int main(int argc, char* argv[]) {
         renderer.draw_bg({250,250,250,255});
         renderer.TextBox(w_ed.widget_editor);
         renderer.drw_file_explorer(w_explorer.explorer);
+		renderer.drw_button(w_btn);
         w_explorer.explorer.tickupdate();
         renderer.rend();
     }
+	renderer.destroy_button(w_btn);
     renderer.destroy();
     return 0;
 }
