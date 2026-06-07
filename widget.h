@@ -1,13 +1,30 @@
+#pragma once
 #include "sdlutil.h"
+class UI_Btn {
+public:
+	std::string btn_name = "new Button";
+	SDL_Texture* text_texture = nullptr;
+	bool hovered = false;
+	bool clicked = false;
+	bool tgr = false;
+};
 class Widget {
 public:
     SDL_Rect widget_rect = {0,0,0,0};
 	std::string widget_name = "new Widget";
 	int widget_layer = 0;
+};
+class Widget_Editor : public Widget {
+public:
 	Editor widget_editor;
-    Editors* widget_editors;
-    File_explorer* file_ex;
-    int ed_index = 0;
+};
+class Widget_File_explorer : public Widget {
+public:
+	File_explorer explorer;
+};
+class Widget_button : public Widget {
+public:
+	UI_Btn button;
 };
 class WidgetManager {
 public:

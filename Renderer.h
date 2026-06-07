@@ -243,7 +243,7 @@ public:
         ed.viewW = ed.TX_Rect.w - linenoW - ed.PADDING * 2;
         SDL_Rect bgrect = { ed.TX_Rect.x, ed.TX_Rect.y, ed.TX_Rect.w, ed.TX_Rect.h };
         SDL_SetRenderDrawColor(ren, 250, 250, 250, 255);
-        SDL_RenderFillRect(ren, &bgrect);
+        //SDL_RenderFillRect(ren, &bgrect);
         SDL_Color textB = { 5,5,5,255 };
         SDL_Rect clip = { linenoW + ed.PADDING + ed.TX_Rect.x - 10, ed.PADDING + ed.TX_Rect.y, ed.TX_Rect.w - (linenoW + ed.PADDING), (ed.TX_Rect.y + ed.TX_Rect.h) - ed.PADDING * 2 };
         SDL_RenderSetClipRect(ren, &clip);
@@ -415,15 +415,6 @@ public:
 		SDL_FreeSurface(surf);
 		if (!tex) return;
 		f.back_arrw_tex = tex;
-        f.Selected_rect_tex = SDL_CreateTexture(ren, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, f.size.w, 20);
-        SDL_SetRenderTarget(ren, f.Selected_rect_tex);
-        SDL_SetRenderDrawColor(ren, 0, 0, 0, 0);
-        SDL_RenderClear(ren);
-        SDL_SetRenderDrawColor(ren, 71, 190, 255, 255);
-		SDL_Rect r = { 0,0,f.size.w,20 };
-		SDL_RenderFillRect(ren, &r);
-        SDL_SetRenderTarget(ren, nullptr);
-        SDL_SetTextureBlendMode(f.Selected_rect_tex, SDL_BLENDMODE_BLEND);
 	}
     void drw_file_explorer(File_explorer& f){
         SDL_SetRenderDrawColor(ren,200,200,200,255);
@@ -441,7 +432,9 @@ public:
             if (viewRow - 1 < i) break;
             if (i + f.scrollrow < f.file_list.size()) {
 				if (f.file_list[i + f.scrollrow].selected) {
-					drawtexture(f.Selected_rect_tex, f.size.x, start_y + (i * 20));
+                    SDL_SetRenderDrawColor(ren, 71, 190, 255, 255);
+                    SDL_Rect r = { f.size.x, start_y + (i * 20), f.size.w, 20 };
+                    SDL_RenderFillRect(ren, &r);
 				}
                 if (f.file_list[i + f.scrollrow].isDir) {
 					drawtexture(folderIcon, f.size.x + 5, start_y + (i * 20) + 2);
@@ -455,5 +448,28 @@ public:
         }
         TextBoxsh(f.path_box_ed);
         drawtexture(f.back_arrw_tex, f.size.x + 10, f.size.y + 5);
+    }
+    SDL_Texture* text_texture(std::string bka) {
+        SDL_Surface* surf = TTF_RenderUTF8_Blended(font_sml, bka.c_str(), { 10,10,10,255 });
+        if (!surf) return nullptr;
+        SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, surf);
+        SDL_FreeSurface(surf);
+        if (!tex) return nullptr;
+        return tex;
+    }
+    void drw_button(Widget_button& b) {
+		if (b.button.text_texture == nullptr) b.button.text_texture = text_texture(b.button.btn_name);
+		SDL_SetRenderDrawColor(ren, 200, 200, 200, 255);
+		SDL_RenderFillRect(ren, &b.widget_rect);
+        if (!b.button.text_texture) return;
+		int w, h; SDL_QueryTexture(b.button.text_texture, nullptr, nullptr, &w, &h);
+		int x = b.widget_rect.x + (b.widget_rect.w - w) / 2;
+
+	}
+    void destroy_button(Widget_button& b) {
+        if (b.button.text_texture) {
+            SDL_DestroyTexture(b.button.text_texture);
+            b.button.text_texture = nullptr;
+        }
     }
 };

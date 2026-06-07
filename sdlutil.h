@@ -37,7 +37,6 @@ size_t utf8_length(const std::string& s);
 std::string utf8_substr(const std::string& s, size_t char_count);
 namespace fs = std::filesystem;
 namespace utf8 {
-
     inline int charLen(const std::string& s, int i) {
         if (i < 0 || i >= (int)s.size()) return 0;
         unsigned char c = (unsigned char)s[i];
@@ -569,7 +568,7 @@ struct file_enum{
 
 class File_explorer{
 public:
-    SDL_Rect size = {0,0,200,200};
+    SDL_Rect size = {0,20,200,800};
 	SDL_Rect under_box = { size.x,size.y + size.h - 40,size.w, 40 };
     std::vector<file_enum> file_list;
     fs::path path_box = fs::current_path();
@@ -581,7 +580,7 @@ public:
 	//rendererにキャッシュするテクスチャのマップ
     std::unordered_map<std::string, SDL_Texture*> fs_text_cache;
 	SDL_Texture* back_arrw_tex = nullptr;
-	SDL_Texture* Selected_rect_tex = nullptr;
+	//SDL_Texture* Selected_rect_tex = nullptr;
 	bool fs_text_cache_dirty = true; // キャッシュが最新でない場合
 
     void tickupdate(){
@@ -615,8 +614,9 @@ public:
         }
     }
     void init(int lineH){
-        path_box_ed.set_init({size.x,size.y,size.w,25},path_box.string(),lineH);
+        path_box_ed.set_init({size.x + 40,size.y,size.w - 40,25},path_box.string(),lineH);
         path_box_ed.PADDING = 5;
+		path_box_ed.noLineNo = true;
         file_lister();
     }
     void path_set(std::string p){
@@ -656,4 +656,12 @@ public:
         std::u8string u8temp = p.filename().u8string();
         str = std::string(reinterpret_cast<const char*>(u8temp.c_str()));
 	}
-};  
+    void back_path() {
+        fs::path parent = path_box.parent_path();
+        if (path_box != parent) {
+            std::u8string u8temp = parent.u8string();
+            std::string str = std::string(reinterpret_cast<const char*>(u8temp.c_str()));
+            path_set(str);
+        }
+    }
+}; 

@@ -18,15 +18,18 @@ int main(int argc, char* argv[]) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Init: %s | %s", SDL_GetError(), TTF_GetError());
         return 1;
     }
-	Widget w;
-    File_explorer f_e;
-    f_e.init(renderer.lineH);
-    renderer.fs_texture_init(f_e);
-	w.widget_editor.set_init({ 10, 20, 600, 400 }, "Hello, SDL2!", renderer.lineH);
-	w.widget_rect = { 10, 20, 600, 400 };
-    w.widget_layer = 1;
+    Widget_Editor w_ed;
+    w_ed.widget_editor.set_init({ 200, 20, 600, 780 }, "Hello, SDL2!", renderer.lineH);
+    w_ed.widget_rect = w_ed.widget_editor.TX_Rect;
+    w_ed.widget_layer = 1;
+    Widget_File_explorer w_explorer;
+    w_explorer.explorer.init(renderer.lineH);
+    renderer.fs_texture_init(w_explorer.explorer);
+    w_explorer.widget_rect = w_explorer.explorer.size;
+    w_explorer.widget_layer = 1;
 	WidgetManager w_mgr;
-	w_mgr.addWidget(w);
+	w_mgr.addWidget(w_ed);
+	w_mgr.addWidget(w_explorer);
 	renderer.init_icon_tex();
     int mx = 0;
     int my = 0;
@@ -54,13 +57,14 @@ int main(int argc, char* argv[]) {
 			mouseDown = (e.type == SDL_MOUSEBUTTONDOWN) ? true : (e.type == SDL_MOUSEBUTTONUP) ? false : mouseDown;
 			renderer.mouse_logical_pos(mousex, mousey);
             now_mouse_P = { mousex, mousey };
-            handler.textEditEvent_sh(f_e.path_box_ed,true);
-            handler.File_explorer_Event(f_e);
+            handler.textEditEvent_sh(w_explorer.explorer.path_box_ed,true);
+			handler.FileExplorer_w_t(w_explorer, w_mgr);
+			handler.textEditEvent_w_t(w_ed, w_mgr);
         }
         renderer.draw_bg({250,250,250,255});
-        renderer.TextBox(w.widget_editor);
-        renderer.drw_file_explorer(f_e);
-        f_e.tickupdate();
+        renderer.TextBox(w_ed.widget_editor);
+        renderer.drw_file_explorer(w_explorer.explorer);
+        w_explorer.explorer.tickupdate();
         renderer.rend();
     }
     renderer.destroy();
