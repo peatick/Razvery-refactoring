@@ -31,12 +31,11 @@ int main(int argc, char* argv[]) {
 	w_mgr.addWidget(w_ed);
 	w_mgr.addWidget(w_explorer);
 	renderer.init_icon_tex();
-	UI_Btn btn;
-	btn.btn_name = "Click me!";
-	Widget_button w_btn;
-	w_btn.button = btn;
-	w_btn.widget_rect = { 10, 10, 180, 30 };
 
+	w_mgr.ui_btns.add_btn("File", { 0, 0, 70, 20 },"menu_group", true, true);
+    w_mgr.ui_btns.add_btn("Edit", { 70, 0, 70, 20 }, "menu_group", true, true);
+    w_mgr.ui_btns.add_btn("View", { 140, 0, 70, 20 }, "menu_group", true, true);
+    w_mgr.ui_btns.add_btn("TextEditor", { 140, 20, 70, 20 }, "View", true, true);
 
     int mx = 0;
     int my = 0;
@@ -64,18 +63,27 @@ int main(int argc, char* argv[]) {
 			mouseDown = (e.type == SDL_MOUSEBUTTONDOWN) ? true : (e.type == SDL_MOUSEBUTTONUP) ? false : mouseDown;
 			renderer.mouse_logical_pos(mousex, mousey);
             now_mouse_P = { mousex, mousey };
-            handler.textEditEvent_sh(w_explorer.explorer.path_box_ed,true);
+			handler.Btnui_w_t(w_mgr);
 			handler.FileExplorer_w_t(w_explorer, w_mgr);
 			handler.textEditEvent_w_t(w_ed, w_mgr);
         }
+        w_mgr.btn_order_cls();
         renderer.draw_bg({250,250,250,255});
         renderer.TextBox(w_ed.widget_editor);
         renderer.drw_file_explorer(w_explorer.explorer);
-		renderer.drw_button(w_btn);
+
+		w_mgr.ui_btns.imitate_btn("File");
+		w_mgr.ui_btns.imitate_btn("Edit");
+        if (w_mgr.ui_btns.imitate_btn("View")) {
+			// "View" ボタンがクリックされたときの処理をここに追加
+			w_mgr.ui_btns.imitate_btn("TextEditor");
+        }
+
+        renderer.drw_all_buttons(w_mgr.ui_btns);
         w_explorer.explorer.tickupdate();
         renderer.rend();
     }
-	renderer.destroy_button(w_btn);
+	renderer.destroy_all_buttons(w_mgr.ui_btns);
     renderer.destroy();
     return 0;
 }

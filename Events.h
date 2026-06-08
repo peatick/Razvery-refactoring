@@ -499,4 +499,57 @@ public:
 		textEditEvent_sh(f.path_box_ed, select);
 		File_explorer_Event(f);
     }
+    void Button_w_t(Widget_button& b, WidgetManager& w_mgr) {
+        if (!nl_check()) {
+            return;
+        }
+        SDL_Event& e = *ev;
+        Renderer& renderer = *rend;
+        bool& mouseDown = *mb;
+        SDL_Point& mouse_P = *mP;
+        SDL_Point& nm_P = *nmP;
+        //bool select = w_mgr.Widget_event(nm_P, true) == b.widget_layer;
+        //if (!select) return;
+        if (!SDL_PointInRect(&nm_P, &b.widget_rect)) {
+			b.button.hovered = false;
+            return;
+        }
+        else {
+			b.button.hovered = true;
+        }
+		b.button.clicked = L_click();
+    }
+    void Btnui_w_t(WidgetManager& w_mgr) {
+        if (!nl_check()) {
+            return;
+        }
+        SDL_Event& e = *ev;
+        Renderer& renderer = *rend;
+        bool& mouseDown = *mb;
+        SDL_Point& mouse_P = *mP;
+        SDL_Point& nm_P = *nmP;
+		btn_mgr& bm = w_mgr.ui_btns;
+        for (auto& btn : bm.btns) {
+			Widget_button& b = btn.second;
+			if (!SDL_PointInRect(&nm_P, &b.widget_rect)) {
+				b.button.hovered = false;
+				continue;
+			}
+			else {
+				b.button.hovered = true;
+			}
+            if(!b.button.tgr){
+                b.button.clicked = L_click();
+            }
+            else {
+				if (L_click()) {
+					b.button.clicked = !b.button.clicked;
+                    if (b.button.radio && b.button.clicked) {
+						bm.group_off(b.button.group);
+						b.button.clicked = true;
+                    }
+				}
+            }
+        }
+    }
 };

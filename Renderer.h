@@ -459,8 +459,18 @@ public:
     }
     void drw_button(Widget_button& b) {
 		if (b.button.text_texture == nullptr) b.button.text_texture = text_texture(b.button.btn_name);
-		SDL_SetRenderDrawColor(ren, 220, 220, 220, 255);
+		if (b.button.hovered) {
+			SDL_SetRenderDrawColor(ren, 190, 190, 190, 255);
+		}
+		else {
+            SDL_SetRenderDrawColor(ren, 220, 220, 220, 255);
+		}
+		if (b.button.clicked) {
+			SDL_SetRenderDrawColor(ren, 170, 170, 170, 255);
+		}
+        
 		SDL_RenderFillRect(ren, &b.widget_rect);
+
         if (!b.button.text_texture) return;
 		int w, h; SDL_QueryTexture(b.button.text_texture, nullptr, nullptr, &w, &h);
 		int x = b.widget_rect.x + (b.widget_rect.w - w) / 2;
@@ -471,6 +481,16 @@ public:
         if (b.button.text_texture) {
             SDL_DestroyTexture(b.button.text_texture);
             b.button.text_texture = nullptr;
+        }
+    }
+	void destroy_all_buttons(btn_mgr& bm) {
+        for (auto& name : bm.btns) {
+			destroy_button(name.second);
+        }
+	}
+    void drw_all_buttons(btn_mgr& bm) {
+        for (auto& name : bm.btn_order) {
+			drw_button(bm.btns[name]);
         }
     }
 };
