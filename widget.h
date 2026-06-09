@@ -9,6 +9,8 @@ public:
 	bool tgr = false;
 	std::string group = "";
 	bool radio = false;
+	bool one_sht = true;
+	bool bef_btn = false;
 };
 class Widget {
 public:
@@ -53,7 +55,10 @@ public:
 	bool imitate_btn(const std::string& name) {
 		if (btns.contains(name)) {
 			btn_order.push_back(name);
-			return btns[name].button.clicked;
+			
+			bool rt = btns[name].button.clicked && !btns[name].button.bef_btn;
+			btns[name].button.bef_btn = btns[name].button.clicked;
+			return rt;
 		}
 		return false;
 	}

@@ -529,6 +529,8 @@ public:
         SDL_Point& mouse_P = *mP;
         SDL_Point& nm_P = *nmP;
 		btn_mgr& bm = w_mgr.ui_btns;
+
+        bool btn_clicked = false; 
         for (auto& btn : bm.btns) {
 			Widget_button& b = btn.second;
 			if (!SDL_PointInRect(&nm_P, &b.widget_rect)) {
@@ -538,6 +540,7 @@ public:
 			else {
 				b.button.hovered = true;
 			}
+            if(L_click()) btn_clicked = true;
             if(!b.button.tgr){
                 b.button.clicked = L_click();
             }
@@ -549,6 +552,12 @@ public:
 						b.button.clicked = true;
                     }
 				}
+            }
+        }
+        if(L_click() && !btn_clicked){
+            for (auto& btn : bm.btns) {
+                Widget_button& b = btn.second;
+                b.button.clicked = false;
             }
         }
     }

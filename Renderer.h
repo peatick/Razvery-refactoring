@@ -29,11 +29,12 @@ public:
 
         win = SDL_CreateWindow("SDL2", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIN_W, WIN_H, SDL_WINDOW_RESIZABLE);
         if (!win) return false;
+        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
         ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
         if (!ren) return false;
 
         SDL_RenderSetLogicalSize(ren, logical_W, logical_H);
-        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
+        
 
         font = TTF_OpenFont(fontPath, FONT_SIZE);
         font_sml = TTF_OpenFont(fontPath, FONT_SIZE);
@@ -84,7 +85,7 @@ public:
     }
     void drawText(const std::string& s, int x, int y, SDL_Color col) {
         if (s.empty()) return;
-        SDL_Surface* surf = TTF_RenderUTF8_Blended(font, s.c_str(), col);
+        SDL_Surface* surf = TTF_RenderUTF8_Solid(font, s.c_str(), col);
         if (!surf) return;
         SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, surf);
         SDL_FreeSurface(surf);
@@ -102,7 +103,7 @@ public:
     }
     void drawsmlText(const std::string& s, int x, int y, SDL_Color col) {
         if (s.empty()) return;
-        SDL_Surface* surf = TTF_RenderUTF8_Blended(font_sml, s.c_str(), col);
+        SDL_Surface* surf = TTF_RenderUTF8_Solid(font_sml, s.c_str(), col);
         if (!surf) return;
         SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, surf);
         SDL_FreeSurface(surf);
@@ -399,7 +400,7 @@ public:
 		for (const auto& fe : f.file_list) {
 			std::string filename;
 			f.filename2string(fe.file_path, filename);
-			SDL_Surface* surf = TTF_RenderUTF8_Blended(font, filename.c_str(), { 10,10,10,255 });
+			SDL_Surface* surf = TTF_RenderUTF8_Solid(font, filename.c_str(), { 10,10,10,255 });
 			if (!surf) continue;
 			SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, surf);
 			SDL_FreeSurface(surf);
@@ -409,7 +410,7 @@ public:
     }
 	void fs_texture_init(File_explorer& f) {
 		std::string bka = "<-";
-		SDL_Surface* surf = TTF_RenderUTF8_Blended(font, bka.c_str(), {10,10,10,255});
+		SDL_Surface* surf = TTF_RenderUTF8_Solid(font, bka.c_str(), {10,10,10,255});
 		if (!surf) return;
 		SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, surf);
 		SDL_FreeSurface(surf);
@@ -450,7 +451,7 @@ public:
         drawtexture(f.back_arrw_tex, f.size.x + 10, f.size.y + 5);
     }
     SDL_Texture* text_texture(std::string bka) {
-        SDL_Surface* surf = TTF_RenderUTF8_Blended(font_sml, bka.c_str(), { 10,10,10,255 });
+        SDL_Surface* surf = TTF_RenderUTF8_Solid(font_sml, bka.c_str(), { 10,10,10,255 });
         if (!surf) return nullptr;
         SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, surf);
         SDL_FreeSurface(surf);
