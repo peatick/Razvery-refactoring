@@ -56,6 +56,7 @@ public:
 		if (btns.contains(name)) {
 			btn_order.push_back(name);
 			
+			if (btns[name].button.tgr) return btns[name].button.clicked;
 			bool rt = btns[name].button.clicked && !btns[name].button.bef_btn;
 			btns[name].button.bef_btn = btns[name].button.clicked;
 			return rt;

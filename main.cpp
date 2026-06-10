@@ -3,13 +3,28 @@
 #include "sdlutil.h"
 #include "Renderer.h"
 #include "Events.h"
+#include "sdl_frame.h"
 #include <algorithm>
 #include <climits>
 #include <deque>
 #include <sstream>
 #include <string>
 #include <vector>
-
+int main(int argc, char* argv[]) {
+    S_Frame f;
+    if (!f.init(argc,argv)) {
+        return 1;
+    }
+    f.addwidget(f.w_Editor, { 0,0,300,300 }, 1, "TextEditor");
+    while (f.running) {
+        f.ww_editor("TextEditor");
+        f.events();
+        f.render_obj();
+    }
+    f.exit();
+    return 0;
+}
+/*
 int main(int argc, char* argv[]) {
     const char* fontPath = (argc > 1) ? argv[1] : "";
 	EventHandler handler;
@@ -100,3 +115,4 @@ int main(int argc, char* argv[]) {
     renderer.destroy();
     return 0;
 }
+*/
