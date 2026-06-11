@@ -407,16 +407,25 @@ public:
 			if (!tex) continue;
 			f.fs_text_cache[filename] = tex;
 		}
+        
     }
 	void fs_texture_init(File_explorer& f) {
 		std::string bka = "<-";
 		SDL_Surface* surf = TTF_RenderUTF8_Solid(font, bka.c_str(), {10,10,10,255});
-		if (!surf) return;
+        if (!surf) return;
 		SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, surf);
 		SDL_FreeSurface(surf);
 		if (!tex) return;
 		f.back_arrw_tex = tex;
+        
 	}
+    void fs_texture_destruct(File_explorer& f) {
+        SDL_DestroyTexture(f.back_arrw_tex);
+        for (auto& [_, tex] : f.fs_text_cache) {
+            SDL_DestroyTexture(tex);
+        }
+        f.fs_text_cache.clear();
+    }
     void drw_file_explorer(File_explorer& f){
         SDL_SetRenderDrawColor(ren,200,200,200,255);
         SDL_RenderFillRect(ren,&f.size);
@@ -444,7 +453,7 @@ public:
 					drawtexture(fileIcon, f.size.x + 5, start_y + (i * 20) + 2);
                 }
                 f.filename2string(f.file_list[i +f.scrollrow].file_path, path_str);
-				drawtexture_clip(f.fs_text_cache[path_str], start_x, start_y + (i * 20), f.size.w - start_x, 20);
+				drawtexture_clip(f.fs_text_cache[path_str], start_x, start_y + (i * 20), f.size.w - 25, 20);
             }
         }
         TextBoxsh(f.path_box_ed);
