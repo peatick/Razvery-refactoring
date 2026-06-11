@@ -15,9 +15,7 @@ int main(int argc, char* argv[]) {
     if (!f.init(argc,argv)) {
         return 1;
     }
-    f.addwidget(f.w_Editor, { 0,0,300,300 }, 1, "TextEditor");
     while (f.running) {
-        f.ww_editor("TextEditor");
         f.events();
         f.render_obj();
     }

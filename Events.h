@@ -28,6 +28,17 @@ public:
         SDL_Event& e = *ev;
         return e.type == SDL_MOUSEBUTTONDOWN && e.button.clicks == c && e.button.button == SDL_BUTTON_LEFT;
     }
+    bool Widget_ev(Widget w,WidgetManager w_mgr){
+        if(!nl_check()){
+           return false; 
+        }
+        SDL_Event& e = *ev;
+        Renderer& renderer = *rend;
+        bool& mouseDown = *mb;
+        SDL_Point& mouse_P = *mP;
+        bool select = w_mgr.Widget_event(mouse_P,true) == w.widget_layer;
+        return select;
+    }
     void textEditEvent(SDL_Event& e, Editor& ed, Renderer& renderer, bool& mouseDown, SDL_Point mouse_P, bool handler)
     {
         bool select = SDL_PointInRect(&mouse_P, &ed.TX_Rect) && handler;
@@ -560,5 +571,18 @@ public:
                 b.button.clicked = false;
             }
         }
+    }
+    void textEditEvent_u(Editor& ed)
+    {
+        if(!nl_check()){
+           return; 
+        }
+        SDL_Event& e = *ev;
+        Renderer& renderer = *rend;
+        bool& mouseDown = *mb;
+        SDL_Point& mouse_P = *mP;
+        int nm_x = e.button.x;
+        int nm_y = e.button.y;
+        textEditEvent(e, ed, renderer, mouseDown, mouse_P, true);
     }
 };
