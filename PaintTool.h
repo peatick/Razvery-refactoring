@@ -12,6 +12,7 @@ public:
     std::unordered_map<std::string, p_canvas> canvas;
     SDL_Rect size = {0,0,0,0};
     SDL_Rect scopes = {0,0,0,0};
+    std::string now_canvas = "";
     void init(const SDL_Rect& rec){
         size = rec;
         scopes = {0,0,rec.w,rec.h};
@@ -28,6 +29,7 @@ public:
         Uint32 color = SDL_MapRGB(surface->format, 255, 255, 255); // 白色
         SDL_FillRect(surface, NULL, color); // NULL → 全面塗りつぶし
         canvas[name] = {w, h, surface};
+        scopes = {0, 0, w, h};
     }
     void set_pixel(const std::string& name, SDL_Point p, SDL_Color col)
 {
@@ -78,8 +80,14 @@ public:
 
     if (SDL_MUSTLOCK(surface)) {
         SDL_UnlockSurface(surface);
+    }    
     }
-}
+    SDL_Point scope2abs(SDL_Point p){
+        double p_x = std::clamp(p.x,size.x,size.x + size.w);
+        double p_y = std::clamp(p.y,size.y,size.y + size.h);
+        return SDL_Point{int(p_x),int(p_y)};
+    }
+
     void destruct_surf(){
         for (auto& cw : canvas){
             SDL_FreeSurface(cw.second.paint_canvas);

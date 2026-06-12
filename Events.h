@@ -599,9 +599,10 @@ public:
         SDL_Point& mouse_P = *mP;
         int nm_x = e.button.x;
         int nm_y = e.button.y;
-        
+        SDL_Point mp_logical;
         if(LmouseDown){
-            PT.set_pixel("News",*nmP,PT.pencil_col);
+            mp_logical = PT.scope2abs(*nmP);
+            PT.set_pixel(PT.now_canvas,mp_logical,PT.pencil_col);
         }
     }
 };

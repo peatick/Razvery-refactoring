@@ -78,7 +78,7 @@ public:
 		ev_h.Painter_u(pa_t);
 	}
 	void Render(Renderer& renderer) override {
-		renderer.Drw_PaintCanvas("News", pa_t);
+		renderer.Drw_PaintCanvas(pa_t.now_canvas, pa_t);
 	}
 	void Destroyer(Renderer& renderer) override {
 		pa_t.destruct_surf();

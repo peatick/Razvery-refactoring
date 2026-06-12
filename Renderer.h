@@ -504,17 +504,34 @@ public:
 			drw_button(bm.btns[name]);
         }
     }
-    void Drw_Surf(SDL_Surface* s,int x,int y){
+    void Drw_SurfEx(SDL_Surface* s, SDL_Rect dst,SDL_Rect src){
+        // 左
+        if (src.x < 0)
+            src.x = 0;
+
+        // 右
+        if (src.x + src.w > dst.w)
+            src.x = dst.w - src.w;
+
+        // 上
+        if (src.y < 0)
+            src.y = 0;
+
+        // 下
+        if (src.y + src.h > dst.h)
+            src.y = dst.h - src.h;
+        
         if(!s) return;
         SDL_Texture* tex = SDL_CreateTextureFromSurface(ren,s);
         if(!tex) return;
-        drawtexture(tex,x,y);;
+        SDL_RenderCopy(ren, tex, &src, &dst);
+        SDL_DestroyTexture(tex);
     }
     void Drw_PaintCanvas(const std::string& name,PaintTool& PTK){
         SDL_SetRenderDrawColor(ren, 200, 200, 200, 255);
         SDL_RenderFillRect(ren, &PTK.size);
         if(!PTK.canvas.contains(name)) return;
         if(!PTK.canvas[name].paint_canvas) return;
-        Drw_Surf(PTK.canvas[name].paint_canvas,PTK.size.x,PTK.size.y);
+        Drw_SurfEx(PTK.canvas[name].paint_canvas, PTK.size, PTK.scopes);
     }
 };
