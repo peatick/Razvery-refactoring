@@ -11,6 +11,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <type_traits>
 
 class S_Frame {
 public:
@@ -26,6 +27,7 @@ public:
 
 	//events
 	bool mouseDown = false;
+	bool LmouseDown = false;
 	int mx = 0;
 	int my = 0;
 	int mousex = 0, mousey = 0;
@@ -48,12 +50,13 @@ public:
 		handler.mb = &mouseDown;
 		handler.nmP = &now_mouse_P;
 		handler.mP = &clicked_m;
+		handler.L_MDown = &LmouseDown;
 		running = true;
 		return true;
 	}
 	void exit() {
-		for (auto& w_u : Widget_Oders) {
-			w_u->Destroyer(renderer);
+		for (auto& w_us : Widget_s){
+			w_us.second->Destroyer(renderer);
 		}
 		renderer.destroy_all_buttons(w_mgr.ui_btns);
 		renderer.destroy();
@@ -61,7 +64,8 @@ public:
 
 	enum {
 		Editor_UW,
-		Explorer_UW
+		Explorer_UW,
+		Paint_UW
 	};
 
 	void addwidget(int type,const SDL_Rect& r,int layer,const std::string& name) {
@@ -78,6 +82,12 @@ public:
 				w_u->init(renderer, w_mgr, r, layer, "");
 				Widget_s[name] = std::move(w_u);
 			}
+		}else if(type == Paint_UW){
+				if (!Widget_s.contains(name)) {
+				auto w_u = std::make_unique<Widget_paint_u>();
+				w_u->init(renderer, w_mgr, r, layer, "");
+				Widget_s[name] = std::move(w_u);
+			}
 		}
 	}
 	void Widget_Call(const std::string& name) {
@@ -85,6 +95,15 @@ public:
 			Widget_Oders.push_back(Widget_s[name].get());
 		}
 	}
+
+	template<class T>
+	T* get(const std::string& name) {
+		auto it = Widget_s.find(name);
+		if (it == Widget_s.end())
+			return nullptr;
+		return dynamic_cast<T*>(it->second.get());
+	}
+
 	//add button wap
 	void w_addbtn(const std::string& id, const std::string& group, const std::string& name, const SDL_Rect& b_r, bool tgr = false,bool radio = false) {
 		w_mgr.ui_btns.add_btn(id,b_r,group,tgr,radio);
@@ -108,6 +127,7 @@ public:
 			}
 			handler.mP = &clicked_m;
 			mouseDown = (e.type == SDL_MOUSEBUTTONDOWN) ? true : (e.type == SDL_MOUSEBUTTONUP) ? false : mouseDown;
+			LmouseDown = (e.type == SDL_MOUSEBUTTONDOWN  && e.button.button == SDL_BUTTON_LEFT) ? true : (e.type == SDL_MOUSEBUTTONUP  && e.button.button == SDL_BUTTON_LEFT) ? false : LmouseDown;
 			renderer.mouse_logical_pos(mousex, mousey);
 			now_mouse_P = { mousex, mousey };
 

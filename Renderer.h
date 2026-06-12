@@ -1,5 +1,6 @@
 #pragma once
 #include "sdlutil.h"
+#include "PaintTool.h"
 #include "widget.h"
 
 class Renderer {
@@ -30,7 +31,7 @@ public:
         win = SDL_CreateWindow("SDL2", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIN_W, WIN_H, SDL_WINDOW_RESIZABLE);
         if (!win) return false;
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
-        ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
+        ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_SOFTWARE);
         if (!ren) return false;
 
         SDL_RenderSetLogicalSize(ren, logical_W, logical_H);
@@ -502,5 +503,18 @@ public:
         for (auto& name : bm.btn_order) {
 			drw_button(bm.btns[name]);
         }
+    }
+    void Drw_Surf(SDL_Surface* s,int x,int y){
+        if(!s) return;
+        SDL_Texture* tex = SDL_CreateTextureFromSurface(ren,s);
+        if(!tex) return;
+        drawtexture(tex,x,y);;
+    }
+    void Drw_PaintCanvas(const std::string& name,PaintTool& PTK){
+        SDL_SetRenderDrawColor(ren, 200, 200, 200, 255);
+        SDL_RenderFillRect(ren, &PTK.size);
+        if(!PTK.canvas.contains(name)) return;
+        if(!PTK.canvas[name].paint_canvas) return;
+        Drw_Surf(PTK.canvas[name].paint_canvas,PTK.size.x,PTK.size.y);
     }
 };

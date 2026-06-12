@@ -4,6 +4,7 @@
 #include "sdlutil.h"
 #include "Renderer.h"
 #include "Events.h"
+#include "PaintTool.h"
 #include "sdl_frame.h"
 #include <algorithm>
 #include <climits>
@@ -60,5 +61,26 @@ public:
 	}
 	void Destroyer(Renderer& renderer) override {
 		renderer.fs_texture_destruct(explorer);
+	}
+};
+class Widget_paint_u : public Widget_util {
+public:
+	PaintTool pa_t;
+	void init(Renderer& renderer, WidgetManager& w_mgr, const SDL_Rect& rec, int layer, const std::string& name) override {
+		pa_t.init(rec);
+		widget_rect = rec;
+		widget_name = name;
+		widget_layer = layer;
+		w_mgr.addWidget(*this);
+	}
+	void Event(EventHandler& ev_h, WidgetManager& w_mgr) override {
+		if (!ev_h.Widget_ev(*this, w_mgr)) return;
+		ev_h.Painter_u(pa_t);
+	}
+	void Render(Renderer& renderer) override {
+		renderer.Drw_PaintCanvas("News", pa_t);
+	}
+	void Destroyer(Renderer& renderer) override {
+		pa_t.destruct_surf();
 	}
 };

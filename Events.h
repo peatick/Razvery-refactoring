@@ -6,10 +6,11 @@ public:
     SDL_Event* ev = nullptr;
     Renderer* rend = nullptr;
     bool* mb = nullptr;
+    bool* L_MDown = nullptr;
     SDL_Point* mP = nullptr;
     SDL_Point* nmP = nullptr;
     bool nl_check(){
-        if(ev == nullptr || rend == nullptr || mb == nullptr || mP == nullptr || nmP == nullptr){
+        if(ev == nullptr || rend == nullptr || mb == nullptr || mP == nullptr || nmP == nullptr || L_MDown == nullptr){
            return false; 
         }
         return true;
@@ -585,5 +586,22 @@ public:
         int nm_x = e.button.x;
         int nm_y = e.button.y;
         textEditEvent(e, ed, renderer, mouseDown, mouse_P, true);
+    }
+    void Painter_u(PaintTool& PT)
+    {
+        if(!nl_check()){
+           return; 
+        }
+        SDL_Event& e = *ev;
+        Renderer& renderer = *rend;
+        bool& mouseDown = *mb;
+        bool& LmouseDown = *L_MDown;
+        SDL_Point& mouse_P = *mP;
+        int nm_x = e.button.x;
+        int nm_y = e.button.y;
+        
+        if(LmouseDown){
+            PT.set_pixel("News",*nmP,PT.pencil_col);
+        }
     }
 };
