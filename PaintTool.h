@@ -83,8 +83,12 @@ public:
     }    
     }
     SDL_Point scope2abs(SDL_Point p){
-        double p_x = std::clamp(p.x,size.x,size.x + size.w);
-        double p_y = std::clamp(p.y,size.y,size.y + size.h);
+        float p_x = p.x - size.x;
+        float p_y = p.y - size.y;
+        p_x = std::clamp(p_x, 0.0f, float(size.w));
+        p_y = std::clamp(p_y, 0.0f, float(size.h));
+        p_x = (p_x - scopes.x) * (float(scopes.w) / float(size.w)) + size.x;
+        p_y = (p_y - scopes.y) * (float(scopes.h) / float(size.h)) + size.y;
         return SDL_Point{int(p_x),int(p_y)};
     }
 
@@ -93,4 +97,13 @@ public:
             SDL_FreeSurface(cw.second.paint_canvas);
         }
     }
+};
+class ToolBar_Extend {
+public:
+    SDL_Rect size = { 0,0,0,0 };
+    Editor r, g, b, a;
+    void init(const SDL_Rect& rec) {
+        size = rec;
+    }
+    
 };
