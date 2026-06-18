@@ -17,20 +17,15 @@ int main(int argc, char* argv[]) {
     if (!f.init(argc,argv)) {
         return 1;
     }
-    f.addwidget(f.Paint_UW, {0,0,200,200}, 3, "Paint");
-    Widget_paint_u* p = f.get<Widget_paint_u>("Paint");
-    p->pa_t.new_canvas("NewA",200,200);
-    p->pa_t.now_canvas = "NewA";
+    f.addwidget_t<Widget_Ed_u>({0,0,500,500},1,"New_TextEditor");
     f.w_addbtn("UP","Paint","UP", {300,0,40,20},false, true);
-
+    f.es.init({600,0,200,70},{600,0,200,70},f.renderer.lineH);
+    f.es.Search_box.noLineNo = true;
     while (f.running) {
-        f.Widget_Call("Paint");
+        f.Widget_Call("New_TextEditor");
         f.events();
         f.render_obj();
         if(f.q_Btn("UP")){
-            p->pa_t.scopes.w = p->pa_t.scopes.w - 10;
-            std::cout << p->pa_t.scopes.w;
-            p->pa_t.scopes.h = p->pa_t.scopes.h - 10;
         }
     }
     f.exit();

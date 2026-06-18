@@ -62,7 +62,6 @@ public:
         SDL_StartTextInput();
         return true;
     }
-
     void destroy() {
         if (font) TTF_CloseFont(font);
         if (font_sml) TTF_CloseFont(font_sml);
@@ -333,14 +332,14 @@ public:
     }
     void dir_icon(int x, int y, float size) {
         SDL_SetRenderDrawColor(ren, 255, 200, 82, 255);
-        SDL_Rect r = { x,y + 3 * size,17 * size,12 * size };
+        SDL_Rect r = { x,int(y + 3 * size),int(17 * size),int(12 * size) };
         SDL_RenderFillRect(ren, &r);
         r = { x,y, int(5 * size) , int(3 * size) };
         SDL_RenderFillRect(ren, &r);
     }
     void file_icon(int x, int y, float size) {
         SDL_SetRenderDrawColor(ren, 220, 220, 220, 255);
-        SDL_Rect r = { x,y,12 * size,15 * size };
+        SDL_Rect r = { x,y,int(12 * size),int(15 * size) };
         r = { x,y + int(4 * size),int(12 * size),int(15 * size - 4 * size) };
         SDL_RenderFillRect(ren, &r);
         r = { x,y,int(12 * size - 4 * size),int(15 * size) };
@@ -504,34 +503,9 @@ public:
 			drw_button(bm.btns[name]);
         }
     }
-    void Drw_SurfEx(SDL_Surface* s, SDL_Rect dst,SDL_Rect src){
-        // 左
-        if (src.x < 0)
-            src.x = 0;
-
-        // 右
-        if (src.x + src.w > dst.w)
-            src.x = dst.w - src.w;
-
-        // 上
-        if (src.y < 0)
-            src.y = 0;
-
-        // 下
-        if (src.y + src.h > dst.h)
-            src.y = dst.h - src.h;
-        
-        if(!s) return;
-        SDL_Texture* tex = SDL_CreateTextureFromSurface(ren,s);
-        if(!tex) return;
-        SDL_RenderCopy(ren, tex, &src, &dst);
-        SDL_DestroyTexture(tex);
-    }
-    void Drw_PaintCanvas(const std::string& name,PaintTool& PTK){
-        SDL_SetRenderDrawColor(ren, 200, 200, 200, 255);
-        SDL_RenderFillRect(ren, &PTK.size);
-        if(!PTK.canvas.contains(name)) return;
-        if(!PTK.canvas[name].paint_canvas) return;
-        Drw_SurfEx(PTK.canvas[name].paint_canvas, PTK.size, PTK.scopes);
+    void drw_Searchbox(Editor_Search& es){
+        SDL_SetRenderDrawColor(ren,200,200,200,255);
+        SDL_RenderFillRect(ren,&es.size);
+        TextBoxsh(es.Search_box);
     }
 };

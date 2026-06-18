@@ -15,6 +15,8 @@
 
 class S_Frame {
 public:
+	Editor_Search es;
+
 
 	bool running = false;
 
@@ -62,34 +64,15 @@ public:
 		renderer.destroy();
 	}
 
-	enum {
-		Editor_UW,
-		Explorer_UW,
-		Paint_UW
-	};
-
-	void addwidget(int type,const SDL_Rect& r,int layer,const std::string& name) {
-		if(type == Editor_UW){
-			if(!Widget_s.contains(name)){
-				auto w_u = std::make_unique<Widget_Ed_u>();
-				w_u->init(renderer,w_mgr,r,layer,"");
-				Widget_s[name] = std::move(w_u);
-			}
-		}
-		else if (type == Explorer_UW) {
-			if (!Widget_s.contains(name)) {
-				auto w_u = std::make_unique<Widget_explorer_u>();
-				w_u->init(renderer, w_mgr, r, layer, "");
-				Widget_s[name] = std::move(w_u);
-			}
-		}else if(type == Paint_UW){
-				if (!Widget_s.contains(name)) {
-				auto w_u = std::make_unique<Widget_paint_u>();
-				w_u->init(renderer, w_mgr, r, layer, "");
-				Widget_s[name] = std::move(w_u);
-			}
+	template<class T>
+	void addwidget_t(const SDL_Rect& r,int layer,const std::string& name){
+		if(!Widget_s.contains(name)){
+			auto w_u = std::make_unique<T>();
+			w_u->init(renderer,w_mgr,r,layer,"");
+			Widget_s[name] = std::move(w_u);
 		}
 	}
+
 	void Widget_Call(const std::string& name) {
 		if (Widget_s.contains(name)) {
 			Widget_Oders.push_back(Widget_s[name].get());
@@ -136,6 +119,7 @@ public:
 			for (auto& w_u : Widget_Oders) {
 				w_u->Event(handler, w_mgr);
 			}
+			handler.SearchBox(es);
 		}
 	}
 	void render_obj() {
@@ -146,6 +130,8 @@ public:
 		Widget_Oders.clear();
 		renderer.drw_all_buttons(w_mgr.ui_btns);
 		w_mgr.btn_order_cls();
+
+		renderer.drw_Searchbox(es);
 		renderer.rend();
 	}
 };

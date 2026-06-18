@@ -300,6 +300,7 @@ public:
     TextBuffer::Pos selAnchor;
     bool            hasSelection = false;
 	bool            noLineNo = false;
+    bool            searchMode = false;
     int PADDING = PG;
     // IME
     std::string imeComposing;
@@ -563,6 +564,22 @@ struct file_enum{
     fs::path file_path;
 	bool selected = false;
 	bool isDir = false;
+};
+class Editor_Search {
+public:
+    Editor Search_box;
+    SDL_Rect size;
+    void init(SDL_Rect r,SDL_Rect r2,int rh){
+        Search_box.set_init(r,"",rh);
+        size = r2;
+    }
+    int selected = 0;
+    int Searched = 0;
+    std::string search_str = "";
+    std::string b_search_str = "";
+
+
+
 };
 
 

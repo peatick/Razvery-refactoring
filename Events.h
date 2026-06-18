@@ -521,8 +521,6 @@ public:
         bool& mouseDown = *mb;
         SDL_Point& mouse_P = *mP;
         SDL_Point& nm_P = *nmP;
-        //bool select = w_mgr.Widget_event(nm_P, true) == b.widget_layer;
-        //if (!select) return;
         if (!SDL_PointInRect(&nm_P, &b.widget_rect)) {
 			b.button.hovered = false;
             return;
@@ -586,23 +584,29 @@ public:
         int nm_x = e.button.x;
         int nm_y = e.button.y;
         textEditEvent(e, ed, renderer, mouseDown, mouse_P, true);
+        if (e.type == SDL_KEYDOWN && e.key.repeat == 0){
+            int key = e.key.keysym.sym, mod = e.key.keysym.mod;
+            bool ctrl = (mod & KMOD_CTRL) != 0;
+            if (key == SDLK_f && ctrl){
+                ed.searchMode = !ed.searchMode;
+                std::cout << ed.searchMode;
+            }
+        }
     }
-    void Painter_u(PaintTool& PT)
-    {
+    void SearchBox(Editor_Search& es){
         if(!nl_check()){
            return; 
         }
-        SDL_Event& e = *ev;
-        Renderer& renderer = *rend;
-        bool& mouseDown = *mb;
-        bool& LmouseDown = *L_MDown;
         SDL_Point& mouse_P = *mP;
-        int nm_x = e.button.x;
-        int nm_y = e.button.y;
-        SDL_Point mp_logical;
-        if(LmouseDown){
-            mp_logical = PT.scope2abs(*nmP);
-            PT.set_pixel(PT.now_canvas,mp_logical,PT.pencil_col);
+        SDL_Event e = *ev;
+        if(!SDL_PointInRect(mP,&es.size)) return;
+        textEditEvent_sh(es.Search_box,true);
+        if(!SDL_PointInRect(mP,&es.Search_box.TX_Rect)) return;
+        if (e.type == SDL_KEYDOWN && e.key.repeat == 0){
+            int key = e.key.keysym.sym;
+            if (key == SDLK_RETURN){
+                std::cout << "aaa";
+            }
         }
     }
 };
