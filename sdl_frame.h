@@ -15,9 +15,6 @@
 
 class S_Frame {
 public:
-	Editor_Search es;
-
-
 	bool running = false;
 
 	Renderer renderer;
@@ -119,7 +116,6 @@ public:
 			for (auto& w_u : Widget_Oders) {
 				w_u->Event(handler, w_mgr);
 			}
-			handler.SearchBox(es);
 		}
 	}
 	void render_obj() {
@@ -131,7 +127,6 @@ public:
 		renderer.drw_all_buttons(w_mgr.ui_btns);
 		w_mgr.btn_order_cls();
 
-		renderer.drw_Searchbox(es);
 		renderer.rend();
 	}
 };

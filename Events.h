@@ -160,9 +160,6 @@ public:
                 ed.viewRows = (e.window.data2 - ed.PADDING * 2) / renderer.lineH;
             break;
         }
-        if (select) {
-            ed.tickBlink();
-        }
     }
     void textEditEvent_sh(Editor& ed, bool handler)
     {
@@ -583,6 +580,10 @@ public:
         SDL_Point& mouse_P = *mP;
         int nm_x = e.button.x;
         int nm_y = e.button.y;
+        if (ed.searchMode){
+            SDL_Rect r = {ed.TX_Rect.x + ed.TX_Rect.w - 200,ed.TX_Rect.y, 200, 50};
+            if (SDL_PointInRect(nmP,&r)) return;
+        }
         textEditEvent(e, ed, renderer, mouseDown, mouse_P, true);
         if (e.type == SDL_KEYDOWN && e.key.repeat == 0){
             int key = e.key.keysym.sym, mod = e.key.keysym.mod;
@@ -593,10 +594,12 @@ public:
             }
         }
     }
-    void SearchBox(Editor_Search& es){
+    void SearchBox(Editor_Search& es,Editor* ed){
         if(!nl_check()){
            return; 
         }
+        if(!ed) return;
+        Editor& edit = *ed;
         SDL_Point& mouse_P = *mP;
         SDL_Event e = *ev;
         if(!SDL_PointInRect(mP,&es.size)) return;
@@ -605,8 +608,14 @@ public:
         if (e.type == SDL_KEYDOWN && e.key.repeat == 0){
             int key = e.key.keysym.sym;
             if (key == SDLK_RETURN){
-                std::cout << "aaa";
+                if (es.search_str != es.Search_box.buf.line(0)){
+                    es.search_str = es.Search_box.buf.line(0);
+                    es.search();
+                }else{
+                    es.cursor_move();
+                }
             }
         }
+
     }
 };

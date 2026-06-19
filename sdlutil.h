@@ -301,6 +301,8 @@ public:
     bool            hasSelection = false;
 	bool            noLineNo = false;
     bool            searchMode = false;
+
+    bool            selected = false;
     int PADDING = PG;
     // IME
     std::string imeComposing;
@@ -569,17 +571,52 @@ class Editor_Search {
 public:
     Editor Search_box;
     SDL_Rect size;
+    Editor* EDS = nullptr;
+    int index_s = 0;
+    int Searched = 0;
+    struct cursor_p {
+        int line;
+        int pos;
+    };
+    std::string search_str = "";
+    std::vector<cursor_p> cs;
     void init(SDL_Rect r,SDL_Rect r2,int rh){
         Search_box.set_init(r,"",rh);
         size = r2;
+        cs.clear();
     }
-    int selected = 0;
-    int Searched = 0;
-    std::string search_str = "";
-    std::string b_search_str = "";
-
-
-
+    void search(){
+        if(!EDS) return;
+        Editor& e_d = *EDS;
+        if (search_str.empty() || e_d.buf.lines.empty()) {
+            cs.clear();
+            index_s = 0;
+            Searched = 0;
+            return;
+        }
+        cs.clear();
+        Searched = 0;
+        index_s = 0;
+        for (int i = 0; i < e_d.buf.numLines(); ++i) {
+            const std::string& ln = e_d.buf.line(i);
+            size_t pos = ln.find(search_str);
+            while (pos != std::string::npos) {
+                cs.push_back({i, (int)pos});
+                pos = ln.find(search_str, pos + 1);
+            }
+        }
+        Searched = cs.size();
+    }
+    void cursor_move(){
+        if(cs.empty())return;
+        if(!EDS) return;
+        Editor& e_d = *EDS;
+        if (index_s > cs.size() - 1){
+            index_s = 0;
+        }
+        e_d.cursor = {cs[index_s].line,cs[index_s].pos};
+        index_s++;
+    }
 };
 
 

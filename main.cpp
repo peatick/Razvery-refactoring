@@ -17,16 +17,14 @@ int main(int argc, char* argv[]) {
     if (!f.init(argc,argv)) {
         return 1;
     }
-    f.addwidget_t<Widget_Ed_u>({0,0,500,500},1,"New_TextEditor");
-    f.w_addbtn("UP","Paint","UP", {300,0,40,20},false, true);
-    f.es.init({600,0,200,70},{600,0,200,70},f.renderer.lineH);
-    f.es.Search_box.noLineNo = true;
+    //f.addwidget_t<Widget_Ed_u>({0,0,1000,800},1,"New_TextEditor");
+    f.addwidget_t<Widget_Toolbar_u>({0,0,300,300},1,"Toolbar");
+    //f.w_addbtn("UP","Paint","UP", {300,0,40,20},false, true);
     while (f.running) {
-        f.Widget_Call("New_TextEditor");
+
+        f.Widget_Call("Toolbar");
         f.events();
         f.render_obj();
-        if(f.q_Btn("UP")){
-        }
     }
     f.exit();
     return 0;

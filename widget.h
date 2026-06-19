@@ -104,3 +104,19 @@ public:
 		ui_btns.btn_order.clear();
 	}
 };
+
+class Slider{
+public:
+	SDL_Rect bar = {0,0,0,0};
+	SDL_Rect handL = {0,0,0,0};
+	SDL_Color handle_col = {66, 135, 245, 255};
+};
+
+
+class Toolbar {
+public:
+	SDL_Rect size = {0,0,0,0};
+	void init(SDL_Rect r){
+		size = r;
+	}
+};

@@ -507,5 +507,11 @@ public:
         SDL_SetRenderDrawColor(ren,200,200,200,255);
         SDL_RenderFillRect(ren,&es.size);
         TextBoxsh(es.Search_box);
+        std::string drw_text = std::to_string(es.index_s) + " / " + std::to_string(es.Searched);
+        drawText(drw_text,es.size.x + 10,es.size.y + 30,{5,5,5,255});
+    }
+    void drw_Toolbar(Toolbar& t){
+        SDL_SetRenderDrawColor(ren,220,220,220,255);
+        SDL_RenderFillRect(ren,&t.size);
     }
 };
