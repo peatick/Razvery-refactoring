@@ -618,4 +618,78 @@ public:
         }
 
     }
+    void Slider_ev(Slider& s) {
+        if (!nl_check()) return;
+        SDL_Event& e = *ev;
+        Renderer& renderer = *rend;
+        bool& mouseDown = *mb;
+        SDL_Point& mouse_P = *mP;
+        SDL_Point& mouse_nP = *nmP;
+
+        int left_l = s.bar.x;
+        int right_l = s.bar.x + s.bar.w - s.handL.w;
+        s.handL.h = s.bar.h * 1.5;
+        s.handL.w = 10;
+        s.handL.y = int(s.bar.y + double(s.bar.h / 2)) - int(double(s.handL.h / 2));
+        s.hover = SDL_PointInRect(nmP, &s.handL);
+        switch (e.type) {
+        case SDL_MOUSEBUTTONDOWN:
+            if (s.hover) {
+                s.clicked = true;
+                s.Clickedx = mouse_nP.x - s.handL.x;
+            }
+            else {
+                s.clicked = false;
+            }
+            break;
+        case SDL_MOUSEMOTION:
+            if (s.clicked) {
+                s.handL.x = e.motion.x - s.Clickedx;
+            }
+            break;
+        case SDL_MOUSEBUTTONUP:
+            s.clicked = false;
+            break;
+        
+        }
+        
+        s.handL.x = std::clamp(s.handL.x, left_l, right_l);
+        double vx = s.handL.x - s.bar.x;
+        float val = s.v_min + (vx / (s.bar.w - s.handL.w)) * (s.v_max - s.v_min);
+        s.now_val = int(val);
+
+        if (s.clicked) s.box.buf.setAllText(std::to_string(s.now_val));
+
+        textEditEvent_sh(s.box, true);
+        if (SDL_PointInRect(&mouse_P, &s.box.TX_Rect)) {
+            if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
+                int key = e.key.keysym.sym;
+                if (key == SDLK_RETURN) {
+                    s.box.cursor = { 0, 0 };
+                    try {
+                        std::string t = s.box.buf.allText();
+                        if (!t.empty())
+                        {
+                            int tmp = std::stoi(s.box.buf.allText());
+                            tmp = std::clamp(tmp, s.v_min, s.v_max);
+                            std::cout << tmp << std::endl;
+                            s.now_val = tmp;
+                            s.set(tmp);
+                            s.box.buf.setAllText(std::to_string(tmp));
+                        }
+                        else {
+                            s.box.buf.setAllText(std::to_string(s.v_min));
+                        }
+                    }
+                    catch (const std::invalid_argument& evs) {
+                        s.box.buf.setAllText(std::to_string(s.now_val));
+                    }
+                    catch (const std::out_of_range& evs) {
+                        s.box.buf.setAllText(std::to_string(s.now_val));
+                    }
+                }
+            }
+        }
+
+    }
 };

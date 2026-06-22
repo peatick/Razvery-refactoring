@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include <type_traits>
+#include <functional>
 
 class S_Frame {
 public:
@@ -116,6 +117,7 @@ public:
 			for (auto& w_u : Widget_Oders) {
 				w_u->Event(handler, w_mgr);
 			}
+
 		}
 	}
 	void render_obj() {
@@ -128,5 +130,35 @@ public:
 		w_mgr.btn_order_cls();
 
 		renderer.rend();
+	}
+
+
+	void event_test(std::vector<std::function<void()>> fncs) {
+		SDL_Event e;
+		while (SDL_PollEvent(&e)) {
+			switch (e.type) {
+			case SDL_QUIT: running = false; break;
+			}
+			handler.ev = &e;
+			if (e.type == SDL_MOUSEBUTTONDOWN) {
+				mx = e.button.x;
+				my = e.button.y;
+				clicked_m = { mx, my };
+			}
+			handler.mP = &clicked_m;
+			mouseDown = (e.type == SDL_MOUSEBUTTONDOWN) ? true : (e.type == SDL_MOUSEBUTTONUP) ? false : mouseDown;
+			LmouseDown = (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) ? true : (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) ? false : LmouseDown;
+			renderer.mouse_logical_pos(mousex, mousey);
+			now_mouse_P = { mousex, mousey };
+
+			handler.Btnui_w_t(w_mgr);
+			//Event Prosses
+			for (auto& w_u : Widget_Oders) {
+				w_u->Event(handler, w_mgr);
+			}
+			for (auto& fn : fncs) {
+				fn();
+			}
+		}
 	}
 };

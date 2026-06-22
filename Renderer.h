@@ -242,9 +242,9 @@ public:
         ed.lineH = lineH;
         ed.viewRows = (ed.TX_Rect.h - ed.PADDING * 2) / lineH;
         ed.viewW = ed.TX_Rect.w - linenoW - ed.PADDING * 2;
-        SDL_Rect bgrect = { ed.TX_Rect.x, ed.TX_Rect.y, ed.TX_Rect.w, ed.TX_Rect.h };
-        SDL_SetRenderDrawColor(ren, 250, 250, 250, 255);
-        //SDL_RenderFillRect(ren, &bgrect);
+        SDL_Rect bgrect = { ed.TX_Rect.x - 10, ed.TX_Rect.y, ed.TX_Rect.w + 10, ed.TX_Rect.h };
+        SDL_SetRenderDrawColor(ren, 220, 220, 220, 255);
+        SDL_RenderFillRect(ren, &bgrect);
         SDL_Color textB = { 5,5,5,255 };
         SDL_Rect clip = { linenoW + ed.PADDING + ed.TX_Rect.x - 10, ed.PADDING + ed.TX_Rect.y, ed.TX_Rect.w - (linenoW + ed.PADDING), (ed.TX_Rect.y + ed.TX_Rect.h) - ed.PADDING * 2 };
         SDL_RenderSetClipRect(ren, &clip);
@@ -509,6 +509,23 @@ public:
         TextBoxsh(es.Search_box);
         std::string drw_text = std::to_string(es.index_s) + " / " + std::to_string(es.Searched);
         drawText(drw_text,es.size.x + 10,es.size.y + 30,{5,5,5,255});
+    }
+    void drw_Slider(Slider& s) {
+        if (!s.Label_tex) {
+            s.Label_tex = text_texture(s.Label);
+        }
+        drawtexture(s.Label_tex, s.bar.x, s.box.TX_Rect.y + 5);
+        SDL_SetRenderDrawColor(ren, 200, 200, 200, 255);
+        SDL_RenderFillRect(ren, &s.bar);
+        if (s.hover) {
+            SDL_SetRenderDrawColor(ren, s.handle_col_hv.r, s.handle_col_hv.g, s.handle_col_hv.b, 255);
+        }
+        else {
+            SDL_SetRenderDrawColor(ren, s.handle_col.r, s.handle_col.g, s.handle_col.b, 255);
+        }
+        SDL_RenderFillRect(ren, &s.handL);
+
+        TextBoxsh(s.box);
     }
     void drw_Toolbar(Toolbar& t){
         SDL_SetRenderDrawColor(ren,220,220,220,255);

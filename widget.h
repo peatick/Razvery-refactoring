@@ -109,7 +109,33 @@ class Slider{
 public:
 	SDL_Rect bar = {0,0,0,0};
 	SDL_Rect handL = {0,0,0,0};
+	bool hover = false;
 	SDL_Color handle_col = {66, 135, 245, 255};
+	SDL_Color handle_col_hv = { 45, 115, 225, 255 };
+	int Clickedx = 0;
+	bool clicked = false;
+	std::string Label = "this";
+	SDL_Texture* Label_tex = nullptr;
+	int v_max = 255;
+	int v_min = 0;
+
+	int now_val = 0;
+
+	void set(int value) {
+		value = std::clamp(value, v_min, v_max);
+		double t = double((value - v_min)) / double((v_max - v_min));
+		int left_l = bar.x;
+		int right_l = bar.x + bar.w - handL.w;
+
+		float ax = t * (bar.w - handL.w) + bar.x;
+		handL.x = int(ax);
+	}
+	Editor box;
+	void init(int lH) {
+		box.set_init({bar.x + 30, bar.y - 30, 40, 20}, "0", lH);
+		box.noLineNo = true;
+		box.PADDING = 5;
+	}
 };
 
 
@@ -119,4 +145,6 @@ public:
 	void init(SDL_Rect r){
 		size = r;
 	}
+	std::vector<Slider> Sliders;
+
 };

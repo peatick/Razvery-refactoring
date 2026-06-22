@@ -90,8 +90,19 @@ struct TextBuffer {
     void clamp(Pos& p) const {
         p.row = std::clamp(p.row, 0, numLines() - 1);
         p.col = std::clamp(p.col, 0, lineLen(p.row));
-        while (p.col > 0 && ((unsigned char)lines[p.row][p.col] & 0xC0) == 0x80) --p.col;
+
+        // UTF-8 continuation byte fix
+        while (p.col > 0) {
+            int len = lineLen(p.row);
+            if (p.col >= len) break; // ★ 安全ガード
+
+            unsigned char c = lines[p.row][p.col];
+            if ((c & 0xC0) != 0x80) break;
+
+            --p.col;
+        }
     }
+
 
     // Insert text at pos; returns position after the inserted text
     Pos insert(Pos pos, const std::string& text) {
