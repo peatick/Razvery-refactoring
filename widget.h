@@ -131,20 +131,66 @@ public:
 		handL.x = int(ax);
 	}
 	Editor box;
-	void init(int lH) {
+	void init(int lH, SDL_Rect r) {
+		bar = r;
+		set(0);
 		box.set_init({bar.x + 30, bar.y - 30, 40, 20}, "0", lH);
 		box.noLineNo = true;
 		box.PADDING = 5;
 	}
+	void destroy() {
+		SDL_DestroyTexture(Label_tex);
+	}
 };
 
 
-class Toolbar {
+class Drws_Toolbar {
 public:
 	SDL_Rect size = {0,0,0,0};
-	void init(SDL_Rect r){
-		size = r;
+	SDL_Rect color_preview = { 0,0,0,0 };
+	Slider sl_r, sl_g, sl_b, sl_a;
+	SDL_Color now_color = { 0,0,0,255 };
+	void setColor() {
+		now_color = { (Uint8)sl_r.now_val, (Uint8)sl_g.now_val, (Uint8)sl_b.now_val, (Uint8)sl_a.now_val };
 	}
-	std::vector<Slider> Sliders;
+	struct palette {
+		SDL_Color color;
+		SDL_Rect rect;
+	};
+	palette pal[8] = {
+		{ {255,0,0,255}, {0,0,0,255} },
+		{ {0,255,0,255}, {0,0,0,255} },
+		{ {0,0,255,255}, {0,0,0,255} },
+		{ {255,255,0,255}, {0,0,0,255} },
+		{ {255,165,0,255}, {0,0,0,255} },
+		{ {128,0,128,255}, {0,0,0,255} },
+		{ {255,192,203,255}, {0,0,0,255} },
+		{ {128,128,128,255}, {0,0,0,255} }
+	};
+	void init(SDL_Rect r,int lH){
+		size = r;
+		int div = r.h / 8;
+		int w = r.w - 20;
+		sl_r.init(lH, { r.x + 10, r.y + div * 4, w, 10 });
+		sl_g.init(lH, { r.x + 10, r.y + div * 5, w, 10 });
+		sl_b.init(lH, { r.x + 10, r.y + div * 6, w, 10 });
+		sl_a.init(lH, { r.x + 10, r.y + div * 7, w, 10 });
+		sl_r.Label = "R:";
+		sl_g.Label = "G:";
+		sl_b.Label = "B:";
+		sl_a.Label = "A:";
+		color_preview = { r.x + 10, r.y + 10, w, div * 2 };
+		SDL_Rect pal_rect;
+		for (int i = 0; i < 8; i++) {
+			pal_rect = { r.x + i * (w / 8 + 5), r.y + div * 2 + 15, w / 8 - 15, w / 8 - 15 };
+			pal[i].rect = pal_rect;
+		}
+	}
+	void destroy_dt() {
+		sl_r.destroy();
+		sl_g.destroy();
+		sl_b.destroy();
+		sl_a.destroy();
+	}
 
 };

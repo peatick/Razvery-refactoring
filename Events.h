@@ -9,18 +9,18 @@ public:
     bool* L_MDown = nullptr;
     SDL_Point* mP = nullptr;
     SDL_Point* nmP = nullptr;
-    bool nl_check(){
-        if(ev == nullptr || rend == nullptr || mb == nullptr || mP == nullptr || nmP == nullptr || L_MDown == nullptr){
-           return false; 
+    bool nl_check() {
+        if (ev == nullptr || rend == nullptr || mb == nullptr || mP == nullptr || nmP == nullptr || L_MDown == nullptr) {
+            return false;
         }
         return true;
     }
     bool L_click() {
-		if (!nl_check()) {
-			return false;
-		}
-		SDL_Event& e = *ev;
-		return e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT;
+        if (!nl_check()) {
+            return false;
+        }
+        SDL_Event& e = *ev;
+        return e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT;
     }
     bool L_clicks(int c) {
         if (!nl_check()) {
@@ -29,15 +29,22 @@ public:
         SDL_Event& e = *ev;
         return e.type == SDL_MOUSEBUTTONDOWN && e.button.clicks == c && e.button.button == SDL_BUTTON_LEFT;
     }
-    bool Widget_ev(Widget w,WidgetManager w_mgr){
-        if(!nl_check()){
-           return false; 
+    bool R_click() {
+        if (!nl_check()) {
+            return false;
+        }
+        SDL_Event& e = *ev;
+        return e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_RIGHT;
+    }
+    bool Widget_ev(Widget w, WidgetManager w_mgr) {
+        if (!nl_check()) {
+            return false;
         }
         SDL_Event& e = *ev;
         Renderer& renderer = *rend;
         bool& mouseDown = *mb;
         SDL_Point& mouse_P = *mP;
-        bool select = w_mgr.Widget_event(mouse_P,true) == w.widget_layer;
+        bool select = w_mgr.Widget_event(mouse_P, true) == w.widget_layer;
         return select;
     }
     void textEditEvent(SDL_Event& e, Editor& ed, Renderer& renderer, bool& mouseDown, SDL_Point mouse_P, bool handler)
@@ -163,8 +170,8 @@ public:
     }
     void textEditEvent_sh(Editor& ed, bool handler)
     {
-        if(!nl_check()){
-           return; 
+        if (!nl_check()) {
+            return;
         }
         SDL_Event& e = *ev;
         Renderer& renderer = *rend;
@@ -296,7 +303,7 @@ public:
         Renderer& renderer = *rend;
         bool& mouseDown = *mb;
         SDL_Point& mouse_P = *mP;
-		SDL_Point& nm_P = *nmP;
+        SDL_Point& nm_P = *nmP;
         bool hover = SDL_PointInRect(&nm_P, &f.size);
         textEditEvent_sh(f.path_box_ed, true);
         if (!hover) {
@@ -328,7 +335,7 @@ public:
         SDL_Rect back_rect = { f.size.x, f.size.y, 40,f.path_box_ed.TX_Rect.h };
         if (SDL_PointInRect(&nm_P, &view_rect)) {
             SDL_Rect click_rect;
-			
+
             if (L_click()) {
                 for (int i = 0; i < f.file_list.size(); i++) {
                     if (viewRow - 1 < i) break;
@@ -339,8 +346,8 @@ public:
                             file.selected = false;
                         }
                         f.file_list[i + f.scrollrow].selected = true;
-						if (L_clicks(2) && fs::is_directory(f.file_list[i + f.scrollrow].file_path)) {
-							std::u8string u8temp = f.file_list[i + f.scrollrow].file_path.u8string();
+                        if (L_clicks(2) && fs::is_directory(f.file_list[i + f.scrollrow].file_path)) {
+                            std::u8string u8temp = f.file_list[i + f.scrollrow].file_path.u8string();
                             std::string str = std::string(reinterpret_cast<const char*>(u8temp.c_str()));
                             f.path_set(str);
                         }
@@ -362,21 +369,21 @@ public:
     }
     void textEditEvent_w_t(Widget_Editor& w, WidgetManager& w_mgr)
     {
-        if(!nl_check()){
-           return; 
+        if (!nl_check()) {
+            return;
         }
         SDL_Event& e = *ev;
         Renderer& renderer = *rend;
         bool& mouseDown = *mb;
         SDL_Point& mouse_P = *mP;
-        bool select = w_mgr.Widget_event(mouse_P,true) == w.widget_layer;
+        bool select = w_mgr.Widget_event(mouse_P, true) == w.widget_layer;
         if (!select) return;
-		if (!SDL_PointInRect(&mouse_P, &w.widget_editor.TX_Rect)) return;
-		Editor& ed = w.widget_editor;
+        if (!SDL_PointInRect(&mouse_P, &w.widget_editor.TX_Rect)) return;
+        Editor& ed = w.widget_editor;
         int nm_x = e.button.x;
         int nm_y = e.button.y;
         switch (e.type) {
-            case SDL_KEYDOWN: {
+        case SDL_KEYDOWN: {
             if (!select) {
                 break;
             }
@@ -504,10 +511,10 @@ public:
         SDL_Point& mouse_P = *mP;
         bool select = w_mgr.Widget_event(mouse_P, true) == w.widget_layer;
         if (!select) return;
-		if (!SDL_PointInRect(&mouse_P, &w.explorer.size)) return;
-		File_explorer& f = w.explorer;
-		textEditEvent_sh(f.path_box_ed, select);
-		File_explorer_Event(f);
+        if (!SDL_PointInRect(&mouse_P, &w.explorer.size)) return;
+        File_explorer& f = w.explorer;
+        textEditEvent_sh(f.path_box_ed, select);
+        File_explorer_Event(f);
     }
     void Button_w_t(Widget_button& b, WidgetManager& w_mgr) {
         if (!nl_check()) {
@@ -519,13 +526,13 @@ public:
         SDL_Point& mouse_P = *mP;
         SDL_Point& nm_P = *nmP;
         if (!SDL_PointInRect(&nm_P, &b.widget_rect)) {
-			b.button.hovered = false;
+            b.button.hovered = false;
             return;
         }
         else {
-			b.button.hovered = true;
+            b.button.hovered = true;
         }
-		b.button.clicked = L_click();
+        b.button.clicked = L_click();
     }
     void Btnui_w_t(WidgetManager& w_mgr) {
         if (!nl_check()) {
@@ -536,33 +543,33 @@ public:
         bool& mouseDown = *mb;
         SDL_Point& mouse_P = *mP;
         SDL_Point& nm_P = *nmP;
-		btn_mgr& bm = w_mgr.ui_btns;
+        btn_mgr& bm = w_mgr.ui_btns;
 
-        bool btn_clicked = false; 
+        bool btn_clicked = false;
         for (auto& btn : bm.btns) {
-			Widget_button& b = btn.second;
-			if (!SDL_PointInRect(&nm_P, &b.widget_rect)) {
-				b.button.hovered = false;
-				continue;
-			}
-			else {
-				b.button.hovered = true;
-			}
-            if(L_click()) btn_clicked = true;
-            if(!b.button.tgr){
+            Widget_button& b = btn.second;
+            if (!SDL_PointInRect(&nm_P, &b.widget_rect)) {
+                b.button.hovered = false;
+                continue;
+            }
+            else {
+                b.button.hovered = true;
+            }
+            if (L_click()) btn_clicked = true;
+            if (!b.button.tgr) {
                 b.button.clicked = L_click();
             }
             else {
-				if (L_click()) {
-					b.button.clicked = !b.button.clicked;
+                if (L_click()) {
+                    b.button.clicked = !b.button.clicked;
                     if (b.button.radio && b.button.clicked) {
-						bm.group_off(b.button.group);
-						b.button.clicked = true;
+                        bm.group_off(b.button.group);
+                        b.button.clicked = true;
                     }
-				}
+                }
             }
         }
-        if(L_click() && !btn_clicked){
+        if (L_click() && !btn_clicked) {
             for (auto& btn : bm.btns) {
                 Widget_button& b = btn.second;
                 b.button.clicked = false;
@@ -571,8 +578,8 @@ public:
     }
     void textEditEvent_u(Editor& ed)
     {
-        if(!nl_check()){
-           return; 
+        if (!nl_check()) {
+            return;
         }
         SDL_Event& e = *ev;
         Renderer& renderer = *rend;
@@ -580,38 +587,39 @@ public:
         SDL_Point& mouse_P = *mP;
         int nm_x = e.button.x;
         int nm_y = e.button.y;
-        if (ed.searchMode){
-            SDL_Rect r = {ed.TX_Rect.x + ed.TX_Rect.w - 200,ed.TX_Rect.y, 200, 50};
-            if (SDL_PointInRect(nmP,&r)) return;
+        if (ed.searchMode) {
+            SDL_Rect r = { ed.TX_Rect.x + ed.TX_Rect.w - 200,ed.TX_Rect.y, 200, 50 };
+            if (SDL_PointInRect(nmP, &r)) return;
         }
         textEditEvent(e, ed, renderer, mouseDown, mouse_P, true);
-        if (e.type == SDL_KEYDOWN && e.key.repeat == 0){
+        if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
             int key = e.key.keysym.sym, mod = e.key.keysym.mod;
             bool ctrl = (mod & KMOD_CTRL) != 0;
-            if (key == SDLK_f && ctrl){
+            if (key == SDLK_f && ctrl) {
                 ed.searchMode = !ed.searchMode;
                 std::cout << ed.searchMode;
             }
         }
     }
-    void SearchBox(Editor_Search& es,Editor* ed){
-        if(!nl_check()){
-           return; 
+    void SearchBox(Editor_Search& es, Editor* ed) {
+        if (!nl_check()) {
+            return;
         }
-        if(!ed) return;
+        if (!ed) return;
         Editor& edit = *ed;
         SDL_Point& mouse_P = *mP;
         SDL_Event e = *ev;
-        if(!SDL_PointInRect(mP,&es.size)) return;
-        textEditEvent_sh(es.Search_box,true);
-        if(!SDL_PointInRect(mP,&es.Search_box.TX_Rect)) return;
-        if (e.type == SDL_KEYDOWN && e.key.repeat == 0){
+        if (!SDL_PointInRect(mP, &es.size)) return;
+        textEditEvent_sh(es.Search_box, true);
+        if (!SDL_PointInRect(mP, &es.Search_box.TX_Rect)) return;
+        if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
             int key = e.key.keysym.sym;
-            if (key == SDLK_RETURN){
-                if (es.search_str != es.Search_box.buf.line(0)){
+            if (key == SDLK_RETURN) {
+                if (es.search_str != es.Search_box.buf.line(0)) {
                     es.search_str = es.Search_box.buf.line(0);
                     es.search();
-                }else{
+                }
+                else {
                     es.cursor_move();
                 }
             }
@@ -650,9 +658,9 @@ public:
         case SDL_MOUSEBUTTONUP:
             s.clicked = false;
             break;
-        
+
         }
-        
+
         s.handL.x = std::clamp(s.handL.x, left_l, right_l);
         double vx = s.handL.x - s.bar.x;
         float val = s.v_min + (vx / (s.bar.w - s.handL.w)) * (s.v_max - s.v_min);
@@ -691,5 +699,45 @@ public:
             }
         }
 
+    }
+    void drw_toolbar_ev(Drws_Toolbar& tb) {
+        if (!nl_check()) return;
+        SDL_Event& e = *ev;
+        Renderer& renderer = *rend;
+        bool& mouseDown = *mb;
+        SDL_Point& mouse_nP = *nmP;
+        Slider_ev(tb.sl_r);
+        Slider_ev(tb.sl_g);
+        Slider_ev(tb.sl_b);
+        Slider_ev(tb.sl_a);
+        tb.setColor();
+        for (int i = 0; i < 8; i++) {
+            if (SDL_PointInRect(nmP, &tb.pal[i].rect)) {
+                if (L_click()) {
+                    tb.now_color = tb.pal[i].color;
+                    tb.sl_r.set(tb.now_color.r);
+                    tb.sl_g.set(tb.now_color.g);
+                    tb.sl_b.set(tb.now_color.b);
+                    tb.sl_a.set(tb.now_color.a);
+                }
+                if (R_click()) {
+                    tb.pal[i].color = tb.now_color;
+                }
+            }
+        }
+    }
+    void paintApp_ev(PaintApp& app) {
+        if (!nl_check()) return;
+        SDL_Event& e = *ev;
+        Renderer& renderer = *rend;
+        bool& mouseDown = *mb;
+        SDL_Point& mouse_P = *mP;
+        SDL_Point& nm_P = *nmP;
+        if (SDL_PointInRect(&nm_P, &app.size)) {
+            app.handleEvent(e);
+        }
+        else {
+            app.skip_ev();
+        }
     }
 };

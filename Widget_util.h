@@ -77,16 +77,24 @@ public:
 		renderer.fs_texture_destruct(explorer);
 	}
 };
-class Widget_Toolbar_u : public Widget_util{
+class Widget_d_Toolbar_u : public Widget_util{
 public:
-	Toolbar t;
+	Drws_Toolbar d_tb;
 	void init(Renderer& renderer, WidgetManager& w_mgr, const SDL_Rect& rec, int layer, const std::string& name) override {
-		t.init(rec);
+		d_tb.init(rec, renderer.lineH);
 		widget_rect = rec;
 		widget_name = name;
 		widget_layer = layer;
+		w_mgr.addWidget(*this);
+	}
+	void Event(EventHandler& ev_h, WidgetManager& w_mgr) override {
+		if (!ev_h.Widget_ev(*this, w_mgr)) return;
+		ev_h.drw_toolbar_ev(d_tb);
 	}
 	void Render(Renderer& renderer) override {
-		renderer.drw_Toolbar(t);
+		renderer.drw_toolbar(d_tb);
+	}
+	void Destroyer(Renderer& renderer) override {
+		d_tb.destroy_dt();
 	}
 };
