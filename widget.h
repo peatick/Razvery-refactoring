@@ -120,7 +120,7 @@ public:
 	int v_min = 0;
 
 	int now_val = 0;
-
+	Editor box;
 	void set(int value) {
 		value = std::clamp(value, v_min, v_max);
 		double t = double((value - v_min)) / double((v_max - v_min));
@@ -129,8 +129,10 @@ public:
 
 		float ax = t * (bar.w - handL.w) + bar.x;
 		handL.x = int(ax);
+
+		box.buf.setAllText(std::to_string(value));
 	}
-	Editor box;
+	
 	void init(int lH, SDL_Rect r) {
 		bar = r;
 		set(0);

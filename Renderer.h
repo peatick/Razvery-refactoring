@@ -528,7 +528,7 @@ public:
         TextBoxsh(s.box);
     }
 	void drw_toolbar(Drws_Toolbar& tb) {
-		SDL_SetRenderDrawColor(ren, 220, 220, 220, 255);
+		SDL_SetRenderDrawColor(ren, 190, 190, 200, 255);
 		SDL_RenderFillRect(ren, &tb.size);
 		drw_Slider(tb.sl_a);
 		drw_Slider(tb.sl_b);

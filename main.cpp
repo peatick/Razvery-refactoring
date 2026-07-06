@@ -15,6 +15,8 @@
 int main(int argc, char* argv[]) {
     S_Frame f;
 	PaintApp dr;
+	Drws_Toolbar drw_tb;
+	drw_tb.init({ 500,0,300,500 }, f.renderer.lineH);
 	dr.size = { 0,0,500,500 };
     if (!f.init(argc,argv)) {
         return 1;
@@ -28,6 +30,7 @@ int main(int argc, char* argv[]) {
 
     std::vector<std::function<void()>> fs;
     fs.push_back([&] {f.handler.paintApp_ev(dr); });
+    fs.push_back([&] {f.handler.drw_toolbar_ev(drw_tb); });
     while (f.running) {
 
         //f.Widget_Call("Toolbar");
@@ -38,9 +41,10 @@ int main(int argc, char* argv[]) {
         f.event_test(fs);
         f.renderer.draw_bg({250,250,250,255});
 		f.renderer.drw_PaintTool(dr);
-		//f.renderer.drw_toolbar(drw_tb);
+        dr.pan();
+		f.renderer.drw_toolbar(drw_tb);
         f.renderer.rend();
-        
+		dr.setColor(drw_tb.now_color);
     }
     f.exit();
     return 0;

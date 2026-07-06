@@ -19,6 +19,8 @@ public:
         tex.reset(SDL_CreateTexture(ren, SDL_PIXELFORMAT_ARGB8888,
             SDL_TEXTUREACCESS_STREAMING, W, H));
 
+        SDL_SetTextureBlendMode(tex.get(), SDL_BLENDMODE_BLEND);
+
         canvas.assign(W * H, 0xFFFFFFFFu);
         pushUndo();
     }
@@ -41,29 +43,92 @@ public:
 
     /* ---------- Render ---------- */
     Uint32 coltoUint32(SDL_Color col) {
-        return (Uint32(col.a * 255) << 24) | (Uint32(col.r * 255) << 16) | (Uint32(col.g * 255) << 8) | Uint32(col.b * 255);
+        return (Uint32(col.a) << 24) | (Uint32(col.r) << 16) | (Uint32(col.g) << 8) | Uint32(col.b);
     }
+	void setColor(SDL_Color col) {
+		color = coltoUint32(col);
+	}
 
     Uint32 getColor() {
 		return canvas[lastY * W + lastX];
     }
+    /* ---------- Pan ---------- */
+    void pan() {
+        float step = 2.0f / zoom;
+        if (panL) camX -= step;
+        if (panR) camX += step;
+        if (panU) camY -= step;
+        if (panD) camY += step;
+    }
 
     void render(SDL_Renderer* ren) {
-        SDL_RenderSetClipRect(ren, &size);
-        void* pix; int pitch;
-        SDL_LockTexture(tex.get(), nullptr, &pix, &pitch);
+        // テクスチャ更新（高速化：SDL_UpdateTexture）
+        SDL_UpdateTexture(tex.get(), nullptr, canvas.data(), W * 4);
 
-        for (int y = 0; y < H; y++)
-            memcpy((Uint8*)pix + y * pitch, canvas.data() + y * W, W * 4);
-
-        SDL_UnlockTexture(tex.get());
-
+        SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
         SDL_SetRenderDrawColor(ren, 200, 200, 200, 255);
 
-        SDL_FRect dst{ -camX * zoom, -camY * zoom, W * zoom, H * zoom };
-        SDL_RenderCopyF(ren, tex.get(), nullptr, &dst);
-        SDL_RenderSetClipRect(ren, nullptr);
+        // 描画先矩形（整数化）
+        SDL_Rect dst{
+            int(-camX * zoom),
+            int(-camY * zoom),
+            int(W * zoom),
+            int(H * zoom)
+        };
+
+        // クリッピング矩形（size）
+        int cx0 = size.x;
+        int cy0 = size.y;
+        int cx1 = size.x + size.w;
+        int cy1 = size.y + size.h;
+
+        // src 初期化
+        SDL_Rect src{ 0, 0, W, H };
+
+        // --- 早期リターン（交差なし） ---
+        if (dst.x + dst.w <= cx0 || dst.y + dst.h <= cy0 ||
+            dst.x >= cx1 || dst.y >= cy1)
+            return;
+
+        // --- 左クリップ ---
+        if (dst.x < cx0) {
+            int diff = cx0 - dst.x;
+            dst.x = cx0;
+            dst.w -= diff;
+            src.x += diff / zoom;
+            src.w -= diff / zoom;
+        }
+
+        // --- 上クリップ ---
+        if (dst.y < cy0) {
+            int diff = cy0 - dst.y;
+            dst.y = cy0;
+            dst.h -= diff;
+            src.y += diff / zoom;
+            src.h -= diff / zoom;
+        }
+
+        // --- 右クリップ ---
+        if (dst.x + dst.w > cx1) {
+            int diff = (dst.x + dst.w) - cx1;
+            dst.w -= diff;
+            src.w -= diff / zoom;
+        }
+
+        // --- 下クリップ ---
+        if (dst.y + dst.h > cy1) {
+            int diff = (dst.y + dst.h) - cy1;
+            dst.h -= diff;
+            src.h -= diff / zoom;
+        }
+
+        // --- 描画 ---
+        if (dst.w > 0 && dst.h > 0)
+            SDL_RenderCopy(ren, tex.get(), &src, &dst);
+
+        SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_NONE);
     }
+
 private:
     struct SDL_Deleter {
         void operator()(SDL_Texture* p) const { if (p) SDL_DestroyTexture(p); }
@@ -110,9 +175,28 @@ private:
 
     /* ---------- Drawing ---------- */
     void paintPixel(int x, int y, Uint32 col) {
-        if (x >= 0 && x < W && y >= 0 && y < H)
-            canvas[y * W + x] = col;
+        if (x < 0 || x >= W || y < 0 || y >= H) return;
+
+        Uint32 dst = canvas[y * W + x];
+
+        Uint8 sa = (col >> 24) & 0xFF;
+        float a = sa / 255.0f;
+
+        Uint8 sr = (col >> 16) & 0xFF;
+        Uint8 sg = (col >> 8) & 0xFF;
+        Uint8 sb = (col) & 0xFF;
+
+        Uint8 dr = (dst >> 16) & 0xFF;
+        Uint8 dg = (dst >> 8) & 0xFF;
+        Uint8 db = (dst) & 0xFF;
+
+        Uint8 r = sr * a + dr * (1 - a);
+        Uint8 g = sg * a + dg * (1 - a);
+        Uint8 b = sb * a + db * (1 - a);
+
+        canvas[y * W + x] = (0xFF << 24) | (r << 16) | (g << 8) | b;
     }
+
 
     void paintCircle(int cx, int cy) {
         for (int y = -brush; y <= brush; y++)
@@ -199,15 +283,6 @@ private:
 
         camX = cx - mx / zoom;
         camY = cy - my / zoom;
-    }
-
-    /* ---------- Pan ---------- */
-    void pan() {
-        float step = 10.0f / zoom;
-        if (panL) camX -= step;
-        if (panR) camX += step;
-        if (panU) camY -= step;
-        if (panD) camY += step;
     }
 
     /* ---------- Save ---------- */
