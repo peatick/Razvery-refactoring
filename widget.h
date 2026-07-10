@@ -150,10 +150,20 @@ class Drws_Toolbar {
 public:
 	SDL_Rect size = {0,0,0,0};
 	SDL_Rect color_preview = { 0,0,0,0 };
-	Slider sl_r, sl_g, sl_b, sl_a;
+	Slider sl_r, sl_g, sl_b, sl_a, sl_size;
 	SDL_Color now_color = { 0,0,0,255 };
 	void setColor() {
 		now_color = { (Uint8)sl_r.now_val, (Uint8)sl_g.now_val, (Uint8)sl_b.now_val, (Uint8)sl_a.now_val };
+	}
+	void cl_set(SDL_Color col){
+		if (1) {
+
+			now_color = col;
+			sl_r.set(now_color.r);
+			sl_g.set(now_color.g);
+			sl_b.set(now_color.b);
+			sl_a.set(now_color.a);
+		}
 	}
 	struct palette {
 		SDL_Color color;
@@ -171,16 +181,21 @@ public:
 	};
 	void init(SDL_Rect r,int lH){
 		size = r;
-		int div = r.h / 8;
+		int div = r.h / 9;
 		int w = r.w - 20;
 		sl_r.init(lH, { r.x + 10, r.y + div * 4, w, 10 });
 		sl_g.init(lH, { r.x + 10, r.y + div * 5, w, 10 });
 		sl_b.init(lH, { r.x + 10, r.y + div * 6, w, 10 });
 		sl_a.init(lH, { r.x + 10, r.y + div * 7, w, 10 });
+		sl_size.init(lH, {r.x + 10, r.y + div * 8, w, 10});
 		sl_r.Label = "R:";
 		sl_g.Label = "G:";
 		sl_b.Label = "B:";
 		sl_a.Label = "A:";
+		sl_size.Label = "Siz:";
+		sl_size.v_min = 1;
+		sl_size.v_max = 80;
+		sl_size.set(20);
 		color_preview = { r.x + 10, r.y + 10, w, div * 2 };
 		SDL_Rect pal_rect;
 		for (int i = 0; i < 8; i++) {
@@ -194,5 +209,7 @@ public:
 		sl_b.destroy();
 		sl_a.destroy();
 	}
-
+	bool col_eq(SDL_Color a, SDL_Color b){
+		return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
+	}
 };

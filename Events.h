@@ -710,6 +710,7 @@ public:
         Slider_ev(tb.sl_g);
         Slider_ev(tb.sl_b);
         Slider_ev(tb.sl_a);
+        Slider_ev(tb.sl_size);
         tb.setColor();
         for (int i = 0; i < 8; i++) {
             if (SDL_PointInRect(nmP, &tb.pal[i].rect)) {
@@ -733,11 +734,6 @@ public:
         bool& mouseDown = *mb;
         SDL_Point& mouse_P = *mP;
         SDL_Point& nm_P = *nmP;
-        if (SDL_PointInRect(&nm_P, &app.size)) {
-            app.handleEvent(e);
-        }
-        else {
-            app.skip_ev();
-        }
+        app.handleEvent(e);
     }
 };

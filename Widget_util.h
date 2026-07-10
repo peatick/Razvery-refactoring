@@ -98,3 +98,39 @@ public:
 		d_tb.destroy_dt();
 	}
 };
+class Widget_drw_tools : public Widget_util {
+public:
+	SDL_Rect size = {0,0,0,0};
+	PaintApp pa;
+	Drws_Toolbar DrT;
+	void init(Renderer& renderer, WidgetManager& w_mgr, const SDL_Rect& rec, int layer, const std::string& name) override {
+		size = rec;
+		int dp = size.w / 3;
+		pa.setRect(size.x, size.y, dp * 2, size.h);
+		pa.setSize( 256, 256, renderer.ren);
+		DrT.init({size.x + dp * 2, size.y, dp, size.h}, renderer.lineH);
+		widget_rect = rec;
+		widget_name = name;
+		widget_layer = layer;
+		w_mgr.addWidget(*this);
+	}
+	void Event(EventHandler& ev_h, WidgetManager& w_mgr) override {
+		ev_h.paintApp_ev(pa);
+		ev_h.drw_toolbar_ev(DrT);
+		if (ev_h.Widget_ev(*this, w_mgr)) return;
+	}
+	void Render(Renderer& renderer) override {
+		pa.pan();
+		if(pa.col_d){
+            DrT.cl_set(pa.getCurrentColor());
+            pa.col_d = false;
+        }
+		pa.setColor(DrT.now_color);
+        pa.brush = std::clamp(DrT.sl_size.now_val,pa.burush_size_min,pa.brush_size_max);
+		renderer.drw_PaintTool(pa);
+		renderer.drw_toolbar(DrT);
+	}
+	void Destroyer(Renderer& renderer) override {
+		DrT.destroy_dt();
+	}
+};

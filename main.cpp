@@ -13,38 +13,42 @@
 #include <vector>
 
 int main(int argc, char* argv[]) {
-    S_Frame f;
-	PaintApp dr;
-	Drws_Toolbar drw_tb;
-	drw_tb.init({ 500,0,300,500 }, f.renderer.lineH);
-	dr.size = { 0,0,500,500 };
+    SKEL_Frame f;
+	
     if (!f.init(argc,argv)) {
         return 1;
     }
-    f.addwidget_t<Widget_Ed_u>({ 0, 0, 500, 100 }, 1, "new_txt");
-    f.addwidget_t<Widget_explorer_u>({100,100,500,200},1,"new");
-    f.addwidget_t<Widget_d_Toolbar_u>({0,0,300,300},1,"Toolbar");
-    f.w_addbtn("UP","Paint","UP", {300,0,40,20},false, true);
-    
-	dr.setSize(500, 500, f.renderer.ren);
-
-    std::vector<std::function<void()>> fs;
-    fs.push_back([&] {f.handler.paintApp_ev(dr); });
-    fs.push_back([&] {f.handler.drw_toolbar_ev(drw_tb); });
+    //f.addwidget_t<Widget_Ed_u>({ 0, 0, 500, 100 }, 1, "new_txt");
+    //f.addwidget_t<Widget_explorer_u>({100,100,500,200},1,"new");
+    //f.addwidget_t<Widget_d_Toolbar_u>({0,0,300,300},1,"Toolbar");
+    //f.addwidget_t<Widget_drw_tools>({10,10,900,600},1,"Paint");
+    //f.w_addbtn("M_File","MenB","File", {0,0,70,20},false, true);
+    std::vector<SKEL_Frame::idAndname> insa;
+    insa.push_back({"File_M","File"});
+    insa.push_back({"Edit_M","Edit"});
+    insa.push_back({"View_M","View"});
+    insa.push_back({"Tools_M","Tools"});
+    insa.push_back({"Stt_M","Setting"});
+    f.BtnAutoset_Beside(insa,"Men",{0,0,70,20});
+    //std::vector<std::function<void()>> fs;
+    //fs.push_back([&] {f.handler.paintApp_ev(dr); });
     while (f.running) {
 
-        //f.Widget_Call("Toolbar");
-        //f.q_Btn("UP");
-        //f.events();
-        //f.render_obj();
+        //f.Widget_Call("Paint");
+        f.q_Btn("File_M");
+        f.q_Btn("Edit_M");
+        f.q_Btn("View_M");
+        f.q_Btn("Tools_M");
+        f.q_Btn("Stt_M");
+        f.events();
+        f.render_obj();
         
-        f.event_test(fs);
-        f.renderer.draw_bg({250,250,250,255});
-		f.renderer.drw_PaintTool(dr);
-        dr.pan();
-		f.renderer.drw_toolbar(drw_tb);
-        f.renderer.rend();
-		dr.setColor(drw_tb.now_color);
+        //f.event_test(fs);
+        //f.renderer.draw_bg({250,250,250,255});
+		//f.renderer.drw_PaintTool(dr);
+        //dr.pan();
+		//f.renderer.drw_toolbar(drw_tb);
+        //f.renderer.rend();
     }
     f.exit();
     return 0;

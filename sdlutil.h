@@ -21,10 +21,10 @@ enum fileTYPE{
 
 namespace fs = std::filesystem;
 
-static constexpr int    WIN_W = 1200;
-static constexpr int    WIN_H = 800;
-static constexpr int    logical_W = 1200;
-static constexpr int    logical_H = 800;
+static constexpr int    WIN_W = 800;
+static constexpr int    WIN_H = 600;
+static constexpr int    logical_W = 800;
+static constexpr int    logical_H = 600;
 static constexpr int    FONT_SIZE = 18;
 static constexpr int    FONTSML_SIZE = 12;
 static constexpr int    PG = 16;

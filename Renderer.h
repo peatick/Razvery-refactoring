@@ -534,6 +534,7 @@ public:
 		drw_Slider(tb.sl_b);
 		drw_Slider(tb.sl_g);
 		drw_Slider(tb.sl_r);
+        drw_Slider(tb.sl_size);
 		SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
         SDL_SetRenderDrawColor(ren, tb.now_color.r, tb.now_color.g, tb.now_color.b, tb.now_color.a);
         SDL_RenderFillRect(ren, &tb.color_preview);
@@ -544,8 +545,6 @@ public:
         }
 	}
 	void drw_PaintTool(PaintApp& pt) {
-		SDL_SetRenderDrawColor(ren, 220, 220, 220, 255);
-		SDL_RenderFillRect(ren, &pt.size);
 		pt.render(ren);
 	}
 };

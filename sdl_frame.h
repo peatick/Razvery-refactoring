@@ -14,7 +14,7 @@
 #include <type_traits>
 #include <functional>
 
-class S_Frame {
+class SKEL_Frame {
 public:
 	bool running = false;
 
@@ -130,6 +130,20 @@ public:
 		w_mgr.btn_order_cls();
 
 		renderer.rend();
+	}
+
+	struct idAndname {
+		std::string id;
+		std::string name;
+	};
+	void BtnAutoset_Beside(std::vector<idAndname> iAn, std::string grp, const SDL_Rect s_mpl){
+		if(iAn.empty()) return;
+		int tx = 0;
+		for (int i = 0;i < iAn.size(); i++){
+			tx = s_mpl.x + s_mpl.w * i;
+			std::cout << tx << std::endl;
+			w_addbtn(iAn[i].id, grp, iAn[i].name, {tx, s_mpl.y, s_mpl.w, s_mpl.h}, true, true);
+		}
 	}
 
 
