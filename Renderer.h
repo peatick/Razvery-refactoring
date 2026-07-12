@@ -4,7 +4,6 @@
 #include "widget.h"
 
 class Renderer {
-    SDL_Window* win = nullptr;
     TTF_Font* font = nullptr;
     TTF_Font* font_sml = nullptr;
 
@@ -23,18 +22,17 @@ public:
     SDL_Texture* fileIcon = nullptr;
     int lineH = 0;
     int PADDING = PG;
-    bool init(const char* fontPath) {
+    bool init(const char* fontPath, SDL_Window* win, int log_W, int log_H) {
 
-        if (SDL_Init(SDL_INIT_VIDEO) < 0) return false;
-        if (TTF_Init() < 0) return false;
+        //if (SDL_Init(SDL_INIT_VIDEO) < 0) return false;
+        //if (TTF_Init() < 0) return false;
 
-        win = SDL_CreateWindow("SDL2", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIN_W, WIN_H, SDL_WINDOW_RESIZABLE);
         if (!win) return false;
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
         ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_SOFTWARE);
         if (!ren) return false;
 
-        SDL_RenderSetLogicalSize(ren, logical_W, logical_H);
+        SDL_RenderSetLogicalSize(ren, log_W, log_H);
         
 
         font = TTF_OpenFont(fontPath, FONT_SIZE);
@@ -62,14 +60,13 @@ public:
         SDL_StartTextInput();
         return true;
     }
-    void destroy() {
+    void destroy(SDL_Window* win) {
         if (font) TTF_CloseFont(font);
         if (font_sml) TTF_CloseFont(font_sml);
         if (ren)  SDL_DestroyRenderer(ren);
         if (win)  SDL_DestroyWindow(win);
         if (folderIcon) SDL_DestroyTexture(folderIcon);
 		if (fileIcon) SDL_DestroyTexture(fileIcon);
-        TTF_Quit(); SDL_Quit();
     }
 
     TTF_Font* getFont() { return font; }
@@ -158,7 +155,6 @@ public:
         SDL_RenderPresent(ren);
     }
     void TextBox(Editor& ed) {
-        int winW, winH; SDL_GetWindowSize(win, &winW, &winH);
         int linenoW = ed.noLineNo ? 0 : 50;
         ed.lineH = lineH;
         ed.viewRows = (ed.TX_Rect.h - PADDING * 2) / lineH;
@@ -237,7 +233,6 @@ public:
         adjustHorizontalScroll(ed);
     }
     void TextBoxsh(Editor& ed) {
-        int winW, winH; SDL_GetWindowSize(win, &winW, &winH);
         int linenoW = ed.noLineNo ? 0 : 50;
         ed.lineH = lineH;
         ed.viewRows = (ed.TX_Rect.h - ed.PADDING * 2) / lineH;

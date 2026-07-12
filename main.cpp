@@ -5,13 +5,14 @@
 #include "Events.h"
 #include "sdl_frame.h"
 #include "PaintTool.h"
+#include "skelt_f.h"
 #include <algorithm>
 #include <climits>
 #include <deque>
 #include <sstream>
 #include <string>
 #include <vector>
-
+/*
 int main(int argc, char* argv[]) {
     SKEL_Frame f;
 	
@@ -51,5 +52,28 @@ int main(int argc, char* argv[]) {
         //f.renderer.rend();
     }
     f.exit();
+    return 0;
+}
+*/
+
+
+
+int main(int argc, char* argv[]) {
+    window_Manager wm;
+    if (!wm.init(argc, argv)) {
+        return 1;
+    }
+
+	wm.new_window(800, 600, 800, 600, "window2");
+
+	wm.main_frame.addwidget_t<Widget_Ed_u>({ 0, 0, 500, 100 }, 1, "new_txt");
+
+    while (wm.running) {
+		wm.main_frame.Widget_Call("new_txt");
+        wm.events();
+        wm.render();
+    }
+
+    wm.exit();
     return 0;
 }

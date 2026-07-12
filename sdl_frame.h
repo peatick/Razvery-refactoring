@@ -13,14 +13,19 @@
 #include <vector>
 #include <type_traits>
 #include <functional>
+#include <memory>
 
 class SKEL_Frame {
 public:
 	bool running = false;
+	std::string window_title = "new window 新しいウィンドウ";
+
 
 	Renderer renderer;
 	EventHandler handler;
 	WidgetManager w_mgr;
+	SDL_Window* win = nullptr;
+	Uint32 win_id = 0;
 
 	std::unordered_map<std::string, std::unique_ptr<Widget_util>> Widget_s;
 	std::vector<Widget_util*> Widget_Oders;
@@ -37,14 +42,18 @@ public:
 
 	int argc;
 	char** argv;
-	bool init(int& ar, char* arg[]) {
+	bool init(int& ar, char* arg[],int w_w, int w_h, int log_w, int log_h, std::string title = "new window 新しいウィンドウ") {
 		argc = ar;
 		argv = arg;
+		window_title = title;
 		const char* fontPath = (argc > 1) ? argv[1] : "";
-		if (!renderer.init(fontPath)) {
+		win = SDL_CreateWindow(window_title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w_w, w_h, SDL_WINDOW_RESIZABLE);
+		if (!renderer.init(fontPath, win, log_w, log_h)) {
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Init: %s | %s", SDL_GetError(), TTF_GetError());
 			return false;
 		}
+		win_id = SDL_GetWindowID(win);
+		std::cout << win_id << std::endl;
 		renderer.init_icon_tex();
 		handler.rend = &renderer;
 		handler.mb = &mouseDown;
@@ -59,7 +68,7 @@ public:
 			w_us.second->Destroyer(renderer);
 		}
 		renderer.destroy_all_buttons(w_mgr.ui_btns);
-		renderer.destroy();
+		renderer.destroy(win);
 	}
 
 	template<class T>
@@ -97,27 +106,31 @@ public:
 	void events() {
 		SDL_Event e;
 		while (SDL_PollEvent(&e)) {
-			switch (e.type) {
-				case SDL_QUIT: running = false; break;
-			}
-			handler.ev = &e;
-			if (e.type == SDL_MOUSEBUTTONDOWN) {
-				mx = e.button.x;
-				my = e.button.y;
-				clicked_m = { mx, my };
-			}
-			handler.mP = &clicked_m;
-			mouseDown = (e.type == SDL_MOUSEBUTTONDOWN) ? true : (e.type == SDL_MOUSEBUTTONUP) ? false : mouseDown;
-			LmouseDown = (e.type == SDL_MOUSEBUTTONDOWN  && e.button.button == SDL_BUTTON_LEFT) ? true : (e.type == SDL_MOUSEBUTTONUP  && e.button.button == SDL_BUTTON_LEFT) ? false : LmouseDown;
-			renderer.mouse_logical_pos(mousex, mousey);
-			now_mouse_P = { mousex, mousey };
+			if (SDL_GetWindowID(win) == e.window.windowID){
+				switch (e.type) {
+				case SDL_QUIT: running = false; return;
+				}
+				if (e.window.event == SDL_WINDOWEVENT_CLOSE) {
+					running = false; return;
+				}
+				handler.ev = &e;
+				if (e.type == SDL_MOUSEBUTTONDOWN) {
+					mx = e.button.x;
+					my = e.button.y;
+					clicked_m = { mx, my };
+				}
+				handler.mP = &clicked_m;
+				mouseDown = (e.type == SDL_MOUSEBUTTONDOWN) ? true : (e.type == SDL_MOUSEBUTTONUP) ? false : mouseDown;
+				LmouseDown = (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) ? true : (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) ? false : LmouseDown;
+				renderer.mouse_logical_pos(mousex, mousey);
+				now_mouse_P = { mousex, mousey };
 
-			handler.Btnui_w_t(w_mgr);
-			//Event Prosses
-			for (auto& w_u : Widget_Oders) {
-				w_u->Event(handler, w_mgr);
+				handler.Btnui_w_t(w_mgr);
+				//Event Prosses
+				for (auto& w_u : Widget_Oders) {
+					w_u->Event(handler, w_mgr);
+				}
 			}
-
 		}
 	}
 	void render_obj() {
@@ -172,6 +185,34 @@ public:
 			}
 			for (auto& fn : fncs) {
 				fn();
+			}
+		}
+	}
+
+	void event_K(SDL_Event& e) {
+		if (SDL_GetWindowID(win) == e.window.windowID) {
+			switch (e.type) {
+			case SDL_QUIT: running = false; return;
+			}
+			if (e.window.event == SDL_WINDOWEVENT_CLOSE) {
+				running = false; return;
+			}
+			handler.ev = &e;
+			if (e.type == SDL_MOUSEBUTTONDOWN) {
+				mx = e.button.x;
+				my = e.button.y;
+				clicked_m = { mx, my };
+			}
+			handler.mP = &clicked_m;
+			mouseDown = (e.type == SDL_MOUSEBUTTONDOWN) ? true : (e.type == SDL_MOUSEBUTTONUP) ? false : mouseDown;
+			LmouseDown = (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) ? true : (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) ? false : LmouseDown;
+			renderer.mouse_logical_pos(mousex, mousey);
+			now_mouse_P = { mousex, mousey };
+
+			handler.Btnui_w_t(w_mgr);
+			//Event Prosses
+			for (auto& w_u : Widget_Oders) {
+				w_u->Event(handler, w_mgr);
 			}
 		}
 	}
