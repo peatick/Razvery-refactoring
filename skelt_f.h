@@ -33,25 +33,30 @@ public:
 	void events() {
 		SDL_Event e;
 		while (SDL_PollEvent(&e)) {
+			if (e.type == SDL_QUIT) { running = false; continue; }
+
 			if (SDL_GetWindowID(main_frame.win) == e.window.windowID) {
 				main_frame.handler.ev = &e;
 				main_frame.event_K(e);
-				if (!main_frame.running) {
-					running = false;
-				}
+				if (!main_frame.running) running = false;
+				continue;
 			}
 			for (auto& frame : frames) {
 				if (SDL_GetWindowID(frame->win) == e.window.windowID) {
 					frame->handler.ev = &e;
 					frame->event_K(e);
-					if (!frame->running) {
-						frame->exit();
-						frames.erase(std::remove(frames.begin(), frames.end(), frame), frames.end());
-					}
+					break; // 一致したら他のフレームを見る必要はない
 				}
 			}
 		}
+		// ループの外でまとめて削除
+		frames.erase(std::remove_if(frames.begin(), frames.end(),
+			[](std::unique_ptr<SKEL_Frame>& f) {
+				if (!f->running) { f->exit(); return true; }
+				return false;
+			}), frames.end());
 	}
+
 	void render() {
 		main_frame.render_obj();
 		for (auto& frame : frames) {

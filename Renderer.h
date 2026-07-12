@@ -22,11 +22,10 @@ public:
     SDL_Texture* fileIcon = nullptr;
     int lineH = 0;
     int PADDING = PG;
+    int ww, wh;
     bool init(const char* fontPath, SDL_Window* win, int log_W, int log_H) {
 
-        //if (SDL_Init(SDL_INIT_VIDEO) < 0) return false;
-        //if (TTF_Init() < 0) return false;
-
+		ww = log_W; wh = log_H;
         if (!win) return false;
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
         ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_SOFTWARE);
@@ -148,7 +147,7 @@ public:
     void draw_bg(SDL_Color back) {
         cls(0, 0, 0, 255);
         SDL_SetRenderDrawColor(ren, back.r, back.g, back.b, back.a);
-        SDL_Rect r = { 0,0,WIN_W,WIN_H };
+        SDL_Rect r = { 0,0,ww,wh };
         SDL_RenderFillRect(ren, &r);
     }
     void rend() {
