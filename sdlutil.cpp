@@ -45,7 +45,10 @@ std::string utf8_substr(const std::string& s, size_t char_count) {
     return s.substr(0, i);
 }
 
-
+fs::path str2path(std::string sp) {
+    std::u8string u8 = reinterpret_cast<const char8_t*>(sp.c_str());
+    return fs::path(reinterpret_cast<const char*>(u8.c_str()));
+}
 //  Diff-based Undo/Redo  (Command Pattern)
 //
 //  EditCommand stores:

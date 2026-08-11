@@ -1,7 +1,6 @@
 #pragma once
 #include "sdlutil.h"
 #include "widget.h"
-#include "sdl2/include/SDL.h"
 #include <vector>
 #include <memory>
 #include <cmath>

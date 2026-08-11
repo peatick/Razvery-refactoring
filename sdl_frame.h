@@ -1,6 +1,4 @@
 #pragma once
-#include "sdl2/include/SDL.h"
-#include "sdl2/include/SDL_ttf.h"
 #include "sdlutil.h"
 #include "Renderer.h"
 #include "Events.h"
@@ -53,7 +51,6 @@ public:
 			return false;
 		}
 		win_id = SDL_GetWindowID(win);
-		std::cout << win_id << std::endl;
 		renderer.init_icon_tex();
 		handler.rend = &renderer;
 		handler.mb = &mouseDown;
@@ -72,11 +69,12 @@ public:
 	}
 
 	template<class T>
-	void addwidget_t(const SDL_Rect& r,int layer,const std::string& name){
+	T* addwidget_t(const SDL_Rect& r,int layer,const std::string& name){
 		if(!Widget_s.contains(name)){
 			auto w_u = std::make_unique<T>();
 			w_u->init(renderer,w_mgr,r,layer,"");
 			Widget_s[name] = std::move(w_u);
+			return dynamic_cast<T*>(Widget_s[name].get());
 		}
 	}
 
@@ -154,11 +152,25 @@ public:
 		int tx = 0;
 		for (int i = 0;i < iAn.size(); i++){
 			tx = s_mpl.x + s_mpl.w * i;
-			std::cout << tx << std::endl;
 			w_addbtn(iAn[i].id, grp, iAn[i].name, {tx, s_mpl.y, s_mpl.w, s_mpl.h}, true, true);
 		}
 	}
-
+	void BtnAutoset_Vertical(std::vector<idAndname> iAn, std::string grp, const SDL_Rect s_mpl) {
+		if (iAn.empty()) return;
+		int ty = 0;
+		for (int i = 0; i < iAn.size(); i++) {
+			ty = s_mpl.y + s_mpl.h * i;
+			w_addbtn(iAn[i].id, grp, iAn[i].name, { s_mpl.x , ty, s_mpl.w, s_mpl.h }, true, true);
+		}
+	}
+	void BtnAutoset_Vertical_c(std::vector<idAndname> iAn, std::string grp, const SDL_Rect s_mpl, bool tgr, bool radio) {
+		if (iAn.empty()) return;
+		int ty = 0;
+		for (int i = 0; i < iAn.size(); i++) {
+			ty = s_mpl.y + s_mpl.h * i;
+			w_addbtn(iAn[i].id, grp, iAn[i].name, { s_mpl.x , ty, s_mpl.w, s_mpl.h }, tgr, radio);
+		}
+	}
 
 	void event_test(std::vector<std::function<void()>> fncs) {
 		SDL_Event e;
@@ -209,7 +221,8 @@ public:
 			renderer.mouse_logical_pos(mousex, mousey);
 			now_mouse_P = { mousex, mousey };
 
-			handler.Btnui_w_t(w_mgr);
+			if (handler.Btnui_w_t(w_mgr))
+				return;
 			//Event Prosses
 			for (auto& w_u : Widget_Oders) {
 				w_u->Event(handler, w_mgr);

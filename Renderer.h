@@ -4,8 +4,7 @@
 #include "widget.h"
 
 class Renderer {
-    TTF_Font* font = nullptr;
-    TTF_Font* font_sml = nullptr;
+
 
     SDL_Color colBg = { 30,  30,  35,  255 };
     SDL_Color colText = { 220, 220, 210, 255 };
@@ -17,6 +16,8 @@ class Renderer {
 
 
 public:
+    TTF_Font* font = nullptr;
+    TTF_Font* font_sml = nullptr;
     SDL_Renderer* ren = nullptr;
     SDL_Texture* folderIcon = nullptr;
     SDL_Texture* fileIcon = nullptr;
@@ -25,14 +26,14 @@ public:
     int ww, wh;
     bool init(const char* fontPath, SDL_Window* win, int log_W, int log_H) {
 
-		ww = log_W; wh = log_H;
+        ww = log_W; wh = log_H;
         if (!win) return false;
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
         ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_SOFTWARE);
         if (!ren) return false;
 
         SDL_RenderSetLogicalSize(ren, log_W, log_H);
-        
+
 
         font = TTF_OpenFont(fontPath, FONT_SIZE);
         font_sml = TTF_OpenFont(fontPath, FONT_SIZE);
@@ -65,7 +66,7 @@ public:
         if (ren)  SDL_DestroyRenderer(ren);
         if (win)  SDL_DestroyWindow(win);
         if (folderIcon) SDL_DestroyTexture(folderIcon);
-		if (fileIcon) SDL_DestroyTexture(fileIcon);
+        if (fileIcon) SDL_DestroyTexture(fileIcon);
     }
 
     TTF_Font* getFont() { return font; }
@@ -97,6 +98,12 @@ public:
         SDL_Rect dst = { x,y,w,h };
         SDL_RenderCopy(ren, tex, nullptr, &dst);
     }
+	void drawtexture_center(SDL_Texture* tex, int x, int y) {
+		if (!tex) return;
+		int w, h; SDL_QueryTexture(tex, nullptr, nullptr, &w, &h);
+		SDL_Rect dst = { x - w / 2,y - h / 2,w,h };
+		SDL_RenderCopy(ren, tex, nullptr, &dst);
+	}
     void drawsmlText(const std::string& s, int x, int y, SDL_Color col) {
         if (s.empty()) return;
         SDL_Surface* surf = TTF_RenderUTF8_Solid(font_sml, s.c_str(), col);
@@ -332,7 +339,7 @@ public:
         SDL_RenderFillRect(ren, &r);
     }
     void file_icon(int x, int y, float size) {
-        SDL_SetRenderDrawColor(ren, 220, 220, 220, 255);
+        SDL_SetRenderDrawColor(ren, 250, 250, 250, 255);
         SDL_Rect r = { x,y,int(12 * size),int(15 * size) };
         r = { x,y + int(4 * size),int(12 * size),int(15 * size - 4 * size) };
         SDL_RenderFillRect(ren, &r);
@@ -358,11 +365,11 @@ public:
     }
     void init_icon_tex() {
         folderIcon = SDL_CreateTexture(ren, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 20, 20);
-		SDL_SetRenderTarget(ren, folderIcon);
-		SDL_SetRenderDrawColor(ren, 0, 0, 0, 0);
-		SDL_RenderClear(ren);
-		dir_icon(0, 0, 1.0f);
-		SDL_SetRenderTarget(ren, nullptr);
+        SDL_SetRenderTarget(ren, folderIcon);
+        SDL_SetRenderDrawColor(ren, 0, 0, 0, 0);
+        SDL_RenderClear(ren);
+        dir_icon(0, 0, 1.0f);
+        SDL_SetRenderTarget(ren, nullptr);
         SDL_SetTextureBlendMode(folderIcon, SDL_BLENDMODE_BLEND);
         fileIcon = SDL_CreateTexture(ren, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 20, 20);
         SDL_SetRenderTarget(ren, fileIcon);
@@ -370,49 +377,48 @@ public:
         SDL_RenderClear(ren);
         file_icon(0, 0, 1.0f);
         SDL_SetRenderTarget(ren, nullptr);
-		SDL_SetTextureBlendMode(fileIcon, SDL_BLENDMODE_BLEND);
+        SDL_SetTextureBlendMode(fileIcon, SDL_BLENDMODE_BLEND);
     }
-    void drawtexture_clip(SDL_Texture* tex, int x, int y,int clip_w, int clip_h) {
+    void drawtexture_clip(SDL_Texture* tex, int x, int y, int clip_w, int clip_h) {
         if (!tex) return;
         int w, h; SDL_QueryTexture(tex, nullptr, nullptr, &w, &h);
-		if (clip_w < w) w = clip_w;
+        if (clip_w < w) w = clip_w;
         if (clip_h < h) h = clip_h;
-		if (clip_w >= w) clip_w = w;
+        if (clip_w >= w) clip_w = w;
         if (clip_h >= h) clip_h = h;
         SDL_Rect dst = { x,y,w,h };
-		SDL_Rect clip = { 0,0,clip_w,clip_h };
+        SDL_Rect clip = { 0,0,clip_w,clip_h };
         SDL_RenderCopy(ren, tex, &clip, &dst);
     }
     void update_fs_cache(File_explorer& f) {
-        if(!f.fs_text_cache_dirty) return;
+        if (!f.fs_text_cache_dirty) return;
         // Implementation for updating file system cache
         f.fs_text_cache_dirty = false;
-		for (auto& [_, tex] : f.fs_text_cache) {
-			SDL_DestroyTexture(tex);
-		}
-		f.fs_text_cache.clear();
-		for (const auto& fe : f.file_list) {
-			std::string filename;
-			f.filename2string(fe.file_path, filename);
-			SDL_Surface* surf = TTF_RenderUTF8_Solid(font, filename.c_str(), { 10,10,10,255 });
-			if (!surf) continue;
-			SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, surf);
-			SDL_FreeSurface(surf);
-			if (!tex) continue;
-			f.fs_text_cache[filename] = tex;
-		}
-        
+        for (auto& [_, tex] : f.fs_text_cache) {
+            SDL_DestroyTexture(tex);
+        }
+        f.fs_text_cache.clear();
+        for (const auto& fe : f.file_list) {
+            std::string filename;
+            f.filename2string(fe.file_path, filename);
+            SDL_Surface* surf = TTF_RenderUTF8_Solid(font, filename.c_str(), { 10,10,10,255 });
+            if (!surf) continue;
+            SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, surf);
+            SDL_FreeSurface(surf);
+            if (!tex) continue;
+            f.fs_text_cache[filename] = tex;
+        }
     }
-	void fs_texture_init(File_explorer& f) {
-		std::string bka = "<-";
-		SDL_Surface* surf = TTF_RenderUTF8_Solid(font, bka.c_str(), {10,10,10,255});
+    void fs_texture_init(File_explorer& f) {
+        std::string bka = "<-";
+        SDL_Surface* surf = TTF_RenderUTF8_Solid(font, bka.c_str(), { 10,10,10,255 });
         if (!surf) return;
-		SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, surf);
-		SDL_FreeSurface(surf);
-		if (!tex) return;
-		f.back_arrw_tex = tex;
-        
-	}
+        SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, surf);
+        SDL_FreeSurface(surf);
+        if (!tex) return;
+        f.back_arrw_tex = tex;
+
+    }
     void fs_texture_destruct(File_explorer& f) {
         SDL_DestroyTexture(f.back_arrw_tex);
         for (auto& [_, tex] : f.fs_text_cache) {
@@ -420,34 +426,36 @@ public:
         }
         f.fs_text_cache.clear();
     }
-    void drw_file_explorer(File_explorer& f){
-        SDL_SetRenderDrawColor(ren,200,200,200,255);
-        SDL_RenderFillRect(ren,&f.size);
-        if(f.update){
+    void drw_file_explorer(File_explorer& f) {
+        SDL_SetRenderDrawColor(ren, 200, 200, 200, 255);
+        SDL_RenderFillRect(ren, &f.size);
+        if (f.update) {
             f.update = false;
+            f.file_lister();
+            f.fs_text_cache_dirty = true;
         }
-		int start_x = f.size.x + 25;
-		int start_y = f.size.y + 30;
+        int start_x = f.size.x + 25;
+        int start_y = f.size.y + 30;
         int viewRow = (f.size.h - f.under_box.h - 30) / 20;
-		SDL_Color textC = { 10,10,10,255 };
-		update_fs_cache(f);
-		std::string path_str;
+        SDL_Color textC = { 10,10,10,255 };
+        update_fs_cache(f);
+        std::string path_str;
         for (int i = 0; i < f.file_list.size(); i++) {
             if (viewRow - 1 < i) break;
             if (i + f.scrollrow < f.file_list.size()) {
-				if (f.file_list[i + f.scrollrow].selected) {
+                if (f.file_list[i + f.scrollrow].selected) {
                     SDL_SetRenderDrawColor(ren, 71, 190, 255, 255);
                     SDL_Rect r = { f.size.x, start_y + (i * 20), f.size.w, 20 };
                     SDL_RenderFillRect(ren, &r);
-				}
+                }
                 if (f.file_list[i + f.scrollrow].isDir) {
-					drawtexture(folderIcon, f.size.x + 5, start_y + (i * 20) + 2);
+                    drawtexture(folderIcon, f.size.x + 5, start_y + (i * 20) + 2);
                 }
                 else {
-					drawtexture(fileIcon, f.size.x + 5, start_y + (i * 20) + 2);
+                    drawtexture(fileIcon, f.size.x + 5, start_y + (i * 20) + 2);
                 }
-                f.filename2string(f.file_list[i +f.scrollrow].file_path, path_str);
-				drawtexture_clip(f.fs_text_cache[path_str], start_x, start_y + (i * 20), f.size.w - 25, 20);
+                f.filename2string(f.file_list[i + f.scrollrow].file_path, path_str);
+                drawtexture_clip(f.fs_text_cache[path_str], start_x, start_y + (i * 20), f.size.w - 25, 20);
             }
         }
         TextBoxsh(f.path_box_ed);
@@ -462,47 +470,47 @@ public:
         return tex;
     }
     void drw_button(Widget_button& b) {
-		if (b.button.text_texture == nullptr) b.button.text_texture = text_texture(b.button.btn_name);
-		if (b.button.hovered) {
-			SDL_SetRenderDrawColor(ren, 190, 190, 190, 255);
-		}
-		else {
+        if (b.button.text_texture == nullptr) b.button.text_texture = text_texture(b.button.btn_name);
+        if (b.button.hovered) {
+            SDL_SetRenderDrawColor(ren, 190, 190, 190, 255);
+        }
+        else {
             SDL_SetRenderDrawColor(ren, 220, 220, 220, 255);
-		}
-		if (b.button.clicked) {
-			SDL_SetRenderDrawColor(ren, 170, 170, 170, 255);
-		}
-        
-		SDL_RenderFillRect(ren, &b.widget_rect);
+        }
+        if (b.button.clicked) {
+            SDL_SetRenderDrawColor(ren, 170, 170, 170, 255);
+        }
+
+        SDL_RenderFillRect(ren, &b.widget_rect);
 
         if (!b.button.text_texture) return;
-		int w, h; SDL_QueryTexture(b.button.text_texture, nullptr, nullptr, &w, &h);
-		int x = b.widget_rect.x + (b.widget_rect.w - w) / 2;
-		SDL_Rect draw_rect = { x, b.widget_rect.y + (b.widget_rect.h - h) / 2, w, h };
-		SDL_RenderCopy(ren, b.button.text_texture, nullptr, &draw_rect);
-	}
+        int w, h; SDL_QueryTexture(b.button.text_texture, nullptr, nullptr, &w, &h);
+        int x = b.widget_rect.x + (b.widget_rect.w - w) / 2;
+        SDL_Rect draw_rect = { x, b.widget_rect.y + (b.widget_rect.h - h) / 2, w, h };
+        SDL_RenderCopy(ren, b.button.text_texture, nullptr, &draw_rect);
+    }
     void destroy_button(Widget_button& b) {
         if (b.button.text_texture) {
             SDL_DestroyTexture(b.button.text_texture);
             b.button.text_texture = nullptr;
         }
     }
-	void destroy_all_buttons(btn_mgr& bm) {
+    void destroy_all_buttons(btn_mgr& bm) {
         for (auto& name : bm.btns) {
-			destroy_button(name.second);
-        }
-	}
-    void drw_all_buttons(btn_mgr& bm) {
-        for (auto& name : bm.btn_order) {
-			drw_button(bm.btns[name]);
+            destroy_button(name.second);
         }
     }
-    void drw_Searchbox(Editor_Search& es){
-        SDL_SetRenderDrawColor(ren,200,200,200,255);
-        SDL_RenderFillRect(ren,&es.size);
+    void drw_all_buttons(btn_mgr& bm) {
+        for (auto& name : bm.btn_order) {
+            drw_button(bm.btns[name]);
+        }
+    }
+    void drw_Searchbox(Editor_Search& es) {
+        SDL_SetRenderDrawColor(ren, 200, 200, 200, 255);
+        SDL_RenderFillRect(ren, &es.size);
         TextBoxsh(es.Search_box);
         std::string drw_text = std::to_string(es.index_s) + " / " + std::to_string(es.Searched);
-        drawText(drw_text,es.size.x + 10,es.size.y + 30,{5,5,5,255});
+        drawText(drw_text, es.size.x + 10, es.size.y + 30, { 5,5,5,255 });
     }
     void drw_Slider(Slider& s) {
         if (!s.Label_tex) {
@@ -521,24 +529,25 @@ public:
 
         TextBoxsh(s.box);
     }
-	void drw_toolbar(Drws_Toolbar& tb) {
-		SDL_SetRenderDrawColor(ren, 190, 190, 200, 255);
-		SDL_RenderFillRect(ren, &tb.size);
-		drw_Slider(tb.sl_a);
-		drw_Slider(tb.sl_b);
-		drw_Slider(tb.sl_g);
-		drw_Slider(tb.sl_r);
+    void drw_toolbar(Drws_Toolbar& tb) {
+        SDL_SetRenderDrawColor(ren, 190, 190, 200, 255);
+        SDL_RenderFillRect(ren, &tb.size);
+        drw_Slider(tb.sl_a);
+        drw_Slider(tb.sl_b);
+        drw_Slider(tb.sl_g);
+        drw_Slider(tb.sl_r);
         drw_Slider(tb.sl_size);
-		SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
         SDL_SetRenderDrawColor(ren, tb.now_color.r, tb.now_color.g, tb.now_color.b, tb.now_color.a);
         SDL_RenderFillRect(ren, &tb.color_preview);
         SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_NONE);
-        for(int i = 0; i < 8; i++) {
+        for (int i = 0; i < 8; i++) {
             SDL_SetRenderDrawColor(ren, tb.pal[i].color.r, tb.pal[i].color.g, tb.pal[i].color.b, tb.pal[i].color.a);
             SDL_RenderFillRect(ren, &tb.pal[i].rect);
         }
-	}
-	void drw_PaintTool(PaintApp& pt) {
-		pt.render(ren);
-	}
+    }
+    void drw_PaintTool(PaintApp& pt) {
+        pt.render(ren);
+    }
+
 };

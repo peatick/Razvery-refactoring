@@ -346,10 +346,14 @@ public:
                             file.selected = false;
                         }
                         f.file_list[i + f.scrollrow].selected = true;
-                        if (L_clicks(2) && fs::is_directory(f.file_list[i + f.scrollrow].file_path)) {
-                            std::u8string u8temp = f.file_list[i + f.scrollrow].file_path.u8string();
-                            std::string str = std::string(reinterpret_cast<const char*>(u8temp.c_str()));
-                            f.path_set(str);
+                        if (L_clicks(2)) {
+							f.selected_file_path = f.file_list[i + f.scrollrow].file_path;
+                            f.selected_file_c2 = true;
+                            if (fs::is_directory(f.file_list[i + f.scrollrow].file_path)){
+                                std::u8string u8temp = f.file_list[i + f.scrollrow].file_path.u8string();
+                                std::string str = std::string(reinterpret_cast<const char*>(u8temp.c_str()));
+                                f.path_set(str);
+                            }
                         }
                         break;
                     }
@@ -516,27 +520,9 @@ public:
         textEditEvent_sh(f.path_box_ed, select);
         File_explorer_Event(f);
     }
-    void Button_w_t(Widget_button& b, WidgetManager& w_mgr) {
+    bool Btnui_w_t(WidgetManager& w_mgr) {
         if (!nl_check()) {
-            return;
-        }
-        SDL_Event& e = *ev;
-        Renderer& renderer = *rend;
-        bool& mouseDown = *mb;
-        SDL_Point& mouse_P = *mP;
-        SDL_Point& nm_P = *nmP;
-        if (!SDL_PointInRect(&nm_P, &b.widget_rect)) {
-            b.button.hovered = false;
-            return;
-        }
-        else {
-            b.button.hovered = true;
-        }
-        b.button.clicked = L_click();
-    }
-    void Btnui_w_t(WidgetManager& w_mgr) {
-        if (!nl_check()) {
-            return;
+            return false;
         }
         SDL_Event& e = *ev;
         Renderer& renderer = *rend;
@@ -546,8 +532,8 @@ public:
         btn_mgr& bm = w_mgr.ui_btns;
 
         bool btn_clicked = false;
-        for (auto& btn : bm.btns) {
-            Widget_button& b = btn.second;
+        for (auto& btn_name : w_mgr.ui_btns.btn_order){
+            Widget_button& b = bm.btns[btn_name];
             if (!SDL_PointInRect(&nm_P, &b.widget_rect)) {
                 b.button.hovered = false;
                 continue;
@@ -575,6 +561,7 @@ public:
                 b.button.clicked = false;
             }
         }
+        return btn_clicked;
     }
     void textEditEvent_u(Editor& ed)
     {

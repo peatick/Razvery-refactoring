@@ -31,6 +31,8 @@ static constexpr Uint32 BLINK_MS = 530;
 
 size_t utf8_length(const std::string& s);
 std::string utf8_substr(const std::string& s, size_t char_count);
+fs::path str2path(std::string sp);
+
 namespace fs = std::filesystem;
 namespace utf8 {
     inline int charLen(const std::string& s, int i) {
@@ -302,6 +304,7 @@ class Editor {
 public:
     bool lim_f = false;
     int limit = 0;
+    bool arrw_enter = false;
     TextBuffer      buf;
     TextBuffer::Pos cursor;
     TextBuffer::Pos selAnchor;
@@ -563,12 +566,6 @@ public:
     void resetBlink() { caretOn = true; lastBlink = SDL_GetTicks(); }
 };
 
-struct Editors {
-    Editor ed;
-    std::string name = "new Editor";
-    bool saved = false;
-};
-
 struct file_enum{
     fs::path file_path;
 	bool selected = false;
@@ -588,6 +585,7 @@ public:
     std::string search_str = "";
     std::vector<cursor_p> cs;
     void init(SDL_Rect r,SDL_Rect r2,int rh){
+        Search_box.PADDING = 5;
         Search_box.set_init(r,"",rh);
         size = r2;
         cs.clear();
@@ -622,6 +620,7 @@ public:
             index_s = 0;
         }
         e_d.cursor = {cs[index_s].line,cs[index_s].pos};
+        e_d.scrollRow = cs[index_s].line;
         index_s++;
     }
 };
@@ -634,7 +633,7 @@ public:
     std::vector<file_enum> file_list;
     fs::path path_box = fs::current_path();
     Uint32 last_update = 0;
-    Uint32 update_delay = 1500;
+    Uint32 update_delay = 3000;
     bool update = false;
     int scrollrow = 0;
     Editor path_box_ed;
@@ -644,11 +643,14 @@ public:
 	//SDL_Texture* Selected_rect_tex = nullptr;
 	bool fs_text_cache_dirty = true; // キャッシュが最新でない場合
 
+	fs::path selected_file_path;
+	bool selected_file_c2 = false;
     void tickupdate(){
         Uint32 now = SDL_GetTicks();
         if (now - last_update > update_delay){
             update = true;
             last_update = now;
+            std::cout << "aaa\n";
         }
     }
     void file_sort(){
@@ -726,3 +728,4 @@ public:
         }
     }
 }; 
+

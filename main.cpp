@@ -1,75 +1,52 @@
-#include "sdl2/include/SDL.h"
-#include "sdl2/include/SDL_ttf.h"
-#include "sdlutil.h"
-#include "Renderer.h"
-#include "Events.h"
-#include "sdl_frame.h"
-#include "PaintTool.h"
 #include "skelt_f.h"
-#include <algorithm>
-#include <climits>
-#include <deque>
-#include <sstream>
-#include <string>
-#include <vector>
-/*
-int main(int argc, char* argv[]) {
-    SKEL_Frame f;
-	
-    if (!f.init(argc,argv)) {
-        return 1;
-    }
-    //f.addwidget_t<Widget_Ed_u>({ 0, 0, 500, 100 }, 1, "new_txt");
-    //f.addwidget_t<Widget_explorer_u>({100,100,500,200},1,"new");
-    //f.addwidget_t<Widget_d_Toolbar_u>({0,0,300,300},1,"Toolbar");
-    //f.addwidget_t<Widget_drw_tools>({10,10,900,600},1,"Paint");
-    //f.w_addbtn("M_File","MenB","File", {0,0,70,20},false, true);
-    std::vector<SKEL_Frame::idAndname> insa;
-    insa.push_back({"File_M","File"});
-    insa.push_back({"Edit_M","Edit"});
-    insa.push_back({"View_M","View"});
-    insa.push_back({"Tools_M","Tools"});
-    insa.push_back({"Stt_M","Setting"});
-    f.BtnAutoset_Beside(insa,"Men",{0,0,70,20});
-    //std::vector<std::function<void()>> fs;
-    //fs.push_back([&] {f.handler.paintApp_ev(dr); });
-    while (f.running) {
-
-        //f.Widget_Call("Paint");
-        f.q_Btn("File_M");
-        f.q_Btn("Edit_M");
-        f.q_Btn("View_M");
-        f.q_Btn("Tools_M");
-        f.q_Btn("Stt_M");
-        f.events();
-        f.render_obj();
-        
-        //f.event_test(fs);
-        //f.renderer.draw_bg({250,250,250,255});
-		//f.renderer.drw_PaintTool(dr);
-        //dr.pan();
-		//f.renderer.drw_toolbar(drw_tb);
-        //f.renderer.rend();
-    }
-    f.exit();
-    return 0;
-}
-*/
-
-
-
+#include "UI_Cfg.h"
 int main(int argc, char* argv[]) {
     window_Manager wm;
+	wm.win_w = 1000;
+	wm.win_h = 625;
+	wm.logic_w = 1000;
+	wm.logic_h = 625;
     if (!wm.init(argc, argv)) {
         return 1;
     }
-
-	wm.new_window(800, 600, 800, 600, "window2");
-
-	wm.main_frame.addwidget_t<Widget_Ed_u>({ 0, 0, 500, 100 }, 1, "new_txt");
+    UI_BTNS_MEN Btn_LT;
+    
+	//wm.mf.addwidget_t<Widget_Ed_u>({ 220, 40, 680, 450 }, 1, "Texteditor_1");
+	auto w_paint = wm.mf.addwidget_t<Widget_Paint_v2>({ 0, 20, 1000, 605 }, 1, "Draw_tools");
+    Btn_LT.beside_Btn(wm, "Men", { "File", "Edit", "View", "Tools", "Setting" }, {0,0});
+    Btn_LT.Vertical_Btn(wm, "File", {"New", "Open", "Save", "Save as"}, {0, 20});
 
     while (wm.running) {
-		wm.main_frame.Widget_Call("new_txt");
+        wm.mf.Widget_Call("Draw_tools");
+        if (wm.mf.q_Btn("Men_File")) {
+            if(wm.mf.q_Btn("File_New")) {
+				w_paint->paint.dlgNew_OUT();
+            }
+            if(wm.mf.q_Btn("File_Open")) {
+                wm.new_dialog_Open("img", [&](std::string s) {w_paint->paint.LoadTextureFromPath(s); });
+            }
+            if(wm.mf.q_Btn("File_Save")) {
+                if (!w_paint->paint.savepath.empty()) {
+                    fs::path p = str2path(w_paint->paint.savepath);
+                    if (fs::exists(p)) {
+                        w_paint->paint.SaveTextureToPNG(w_paint->paint.savepath);
+                    }
+                    else {
+                        wm.new_dialog_Save_as(".png", [&](std::string s) {w_paint->paint.SaveTextureToPNG(s); w_paint->paint.savepath = s; });
+                    }
+                }
+            }
+            if(wm.mf.q_Btn("File_Save as")) {
+                wm.new_dialog_Save_as(".png", [&](std::string s) {w_paint->paint.SaveTextureToPNG(s); w_paint->paint.savepath = s; });
+            }
+        }
+        wm.mf.q_Btn("Men_Edit");
+        wm.mf.q_Btn("Men_View");
+        wm.mf.q_Btn("Men_Tools");
+        wm.mf.q_Btn("Men_Setting");
+
+        
+        wm.dialog_EV();
         wm.events();
         wm.render();
     }
