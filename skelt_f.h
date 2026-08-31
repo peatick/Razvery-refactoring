@@ -20,6 +20,12 @@ public:
 	bool& running = mf.running;
 	dialog now_Open_dialog;
 
+	bool vaid_path(std::string& s) {
+		if (s.empty()) return false;
+		fs::path p = str2path(s);
+		return fs::exists(p);
+	}
+
 	bool init(int& argc, char* argv[]) {
 		if (SDL_Init(SDL_INIT_VIDEO) < 0) return false;
 		if (TTF_Init() < 0) return false;
@@ -28,7 +34,7 @@ public:
 			// 必要なフォーマットの読み込みに失敗した場合のエラー処理
 			SDL_Log("IMG_Init failed: %s", IMG_GetError());
 		}
-		return mf.init(argc, argv, win_w, win_h, logic_w, logic_h, "Paint Tool");
+		return mf.init(argc, argv, win_w, win_h, logic_w, logic_h, "MDGW Editor");
 	}
 
 	void new_window(int w_w, int w_h, int log_w, int log_h, const std::string& title) {
@@ -153,6 +159,20 @@ public:
 	void new_dialog_Save_as(const std::string& ext, std::function<void(std::string s)> f) {
 		new_window(800, 600, 800, 600, "File Save");
 		Widget_File_Save_u* F_O = window_map["File Save"]->addwidget_t<Widget_File_Save_u>({ 0, 0, 800, 600 }, 1, "File_Save");
+		now_Open_dialog.call_widget = "File_Save";
+		now_Open_dialog.window_name = "File Save";
+		File_Ed* F_Ad = &F_O->F;
+		F_Ad->File_extension_Lm = true;
+		now_Open_dialog.data_p = static_cast<File_Ed*>(F_Ad);
+		now_Open_dialog.f = f;
+		F_O->F.init_e(ext);
+		Stop_MF = true;
+	}
+
+	void new_dialog_Save_as_Simple(const std::string& ext, std::function<void(std::string s)> f, fs::path save_dir) {
+		new_window(300, 100, 300, 100, "File Save");
+		File_Save_Dialog* F_O = window_map["File Save"]->addwidget_t<File_Save_Dialog>({ 0, 0, 300, 100 }, 1, "File_Save");
+		F_O->F.path_box = save_dir;
 		now_Open_dialog.call_widget = "File_Save";
 		now_Open_dialog.window_name = "File Save";
 		File_Ed* F_Ad = &F_O->F;

@@ -22,6 +22,13 @@ public:
         SDL_Event& e = *ev;
         return e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT;
     }
+    bool MD_click() {
+        if (!nl_check()) {
+            return false;
+        }
+        SDL_Event& e = *ev;
+        return e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_MIDDLE;
+    }
     bool L_clicks(int c) {
         if (!nl_check()) {
             return false;
@@ -35,6 +42,16 @@ public:
         }
         SDL_Event& e = *ev;
         return e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_RIGHT;
+    }
+    bool save_btn() {
+        if (ev->type == SDL_KEYDOWN) {
+            if (SDL_GetModState() && KMOD_CTRL) {
+                if (ev->key.keysym.sym == SDLK_s) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
     bool Widget_ev(Widget w, WidgetManager w_mgr) {
         if (!nl_check()) {

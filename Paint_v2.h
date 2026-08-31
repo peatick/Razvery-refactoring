@@ -1,7 +1,5 @@
 #pragma once
-#include "sdl2/include/SDL.h"
-#include "sdl2/include/SDL_ttf.h"
-#include "sdl2/include/SDL_image.h"
+#include "sdlutil.h"
 #include <deque>
 #include <string>
 #include <vector>
@@ -112,6 +110,7 @@ namespace paintwidget_detail {
 // ============================================================
 class PaintWidget {
 public:
+    bool save_dirt = false;
     std::string savepath;
     PaintWidget() = default;
     ~PaintWidget() { cleanup(); }
@@ -196,6 +195,8 @@ public:
     void SaveTextureToPNG(std::string filename) {
         if (!renderer_ || !canvas_.tex || filename.empty()) return;
 
+        save_dirt = false;
+
         // 1. テクスチャ情報の取得
         int width, height;
         Uint32 format;
@@ -263,8 +264,9 @@ public:
         // 9. Surface の解放
         SDL_FreeSurface(surface);
     }
-private:
     bool canvasDirty() const;
+private:
+    
 
     SDL_Renderer* renderer_ = nullptr;
     SDL_Rect      bounds_ = { 0, 0, 0, 0 };

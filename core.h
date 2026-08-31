@@ -13,7 +13,7 @@ private:
 		bool pressed = false;
     };
 public:
-
+    int now_key_code = 0;
     void set_keybind(SDL_Keycode e_key, std::string fn_name) {
         SDL_Scancode p_key = SDL_GetScancodeFromKey(e_key);
         key_bind[fn_name] = { e_key, p_key };
@@ -29,6 +29,9 @@ public:
                 else if (e.type == SDL_KEYUP && e.key.keysym.sym == kb.ev) {
                     kb.press_U = true;
                 }
+            }
+            if (e.type == SDL_KEYDOWN) {
+                now_key_code = e.key.keysym.sym;
             }
         }
     }
@@ -69,12 +72,36 @@ class GameEngine {
 private:
     
 public:
+    Uint32 frameStart, frameTime, lasttime;
+    int fps = 60;
+    int frameDelay = 1000 / fps;
+
+    float delta_time() {
+        frameStart = SDL_GetTicks();
+        float deltaTime = (frameStart - lasttime) / 1000.0f; // 秒単位のデルタタイム
+        return deltaTime;
+    }
+    void flame_delay() {
+        frameTime = SDL_GetTicks() - frameStart;
+        lasttime = SDL_GetTicks();
+        if (frameTime < frameDelay) {
+            SDL_Delay(frameDelay - frameTime);
+            //std::cout << "Frame Time: " << frameTime << " ms, Delayed for: " << (frameDelay - frameTime) << " ms" << std::endl;
+        }
+    }
+
     SDL_Rect size = { 0, 0, 0, 0 };
     sol::state lua;
     keybord_states ks;
-
+    std::vector<std::string> Scnene_ID;
     std::unordered_map<std::string, scene> scenes;
-    scene* s;
+    scene* Now_Scene = nullptr;
+    void Scene_Set(int id) {
+        if (scenes.contains(Scnene_ID[id])) {
+            Now_Scene = &scenes[Scnene_ID[id]];
+        }
+    }
+
 	sol::function lua_update;
 
     void init() {
@@ -147,3 +174,4 @@ public:
 		ks.update();
     }
 };
+

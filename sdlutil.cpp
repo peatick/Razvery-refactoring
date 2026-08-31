@@ -49,6 +49,26 @@ fs::path str2path(std::string sp) {
     std::u8string u8 = reinterpret_cast<const char8_t*>(sp.c_str());
     return fs::path(reinterpret_cast<const char*>(u8.c_str()));
 }
+
+std::string path2string_s(const fs::path& p) {
+    std::string str;
+    std::u8string u8temp = p.u8string();
+    str = std::string(reinterpret_cast<const char*>(u8temp.c_str()));
+    return str;
+}
+
+bool equals_ignore_case(const std::string& a, const std::string& b) {
+    if (a.length() != b.length()) return false;
+    return std::equal(a.begin(), a.end(), b.begin(), [](unsigned char c1, unsigned char c2) {
+        return std::tolower(c1) == std::tolower(c2);
+        });
+}
+
+bool equals_ext(fs::path a, std::string path_b) {
+    std::string path_a = path2string_s(a.extension());
+    if (path_a.empty() || path_b.empty()) return false;
+    return equals_ignore_case(path_a, path_b);
+}
 //  Diff-based Undo/Redo  (Command Pattern)
 //
 //  EditCommand stores:

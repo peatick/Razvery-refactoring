@@ -431,24 +431,24 @@ SDL_Rect PaintWidget::normalizedSelection() const {
 
 void PaintWidget::setupUI()
 {
-    int bx = 10, by = 8, bw = 46, bh = 36;
+    int bx = 200, by = 8, bw = 46, bh = 36;
     for (int i = 0; i < TOOL_COUNT; i++) {
         toolBtns_[i].rect = { bx + i * (bw + 3), by, bw, bh };
         toolBtns_[i].label = toolNames[i];
     }
     int ex = bx + TOOL_COUNT * (bw + 3) + 14;
-    btnNew_.rect = { ex, by, 44, bh };       btnNew_.label = "New";
-    btnCopy_.rect = { ex + 48, by, 46, bh };  btnCopy_.label = "Copy";
-    btnCut_.rect = { ex + 98, by, 46, bh };  btnCut_.label = "Cut";
-    btnPaste_.rect = { ex + 148, by, 46, bh }; btnPaste_.label = "Paste";
-    btnClear_.rect = { ex + 198, by, 46, bh }; btnClear_.label = "Clear";
-    btnUndo_.rect = { ex + 258, by, 46, bh }; btnUndo_.label = "Undo";
-    btnRedo_.rect = { ex + 308, by, 46, bh }; btnRedo_.label = "Redo";
+    btnNew_.rect = { ex, by, 40, bh };       btnNew_.label = "New";
+    btnCopy_.rect = { ex + 40, by, 40, bh };  btnCopy_.label = "Copy";
+    btnCut_.rect = { ex + 80, by, 40, bh };  btnCut_.label = "Cut";
+    btnPaste_.rect = { ex + 120, by, 40, bh }; btnPaste_.label = "Paste";
+    btnClear_.rect = { ex + 160, by, 40, bh }; btnClear_.label = "Clear";
+    btnUndo_.rect = { ex + 210, by, 40, bh }; btnUndo_.label = "Undo";
+    btnRedo_.rect = { ex + 250, by, 40, bh }; btnRedo_.label = "Redo";
 
-    int gx = localW_ - SIDEBAR_W - 180;
-    btnGrid1_.rect = { gx, by, 50, bh };        btnGrid1_.label = "G:1px";
-    btnGrid8_.rect = { gx + 54, by, 50, bh };   btnGrid8_.label = "G:8px";
-    btnGrid32_.rect = { gx + 108, by, 58, bh };  btnGrid32_.label = "G:32px";
+    int gx = localW_ - SIDEBAR_W - 10;
+    btnGrid1_.rect = { gx - 10, by, 50, bh };        btnGrid1_.label = "G:1px";
+    btnGrid8_.rect = { gx + 44, by, 50, bh };   btnGrid8_.label = "G:8px";
+    btnGrid32_.rect = { gx + 98, by, 58, bh };  btnGrid32_.label = "G:32px";
 
     int lx = localW_ - SIDEBAR_W + 10, lw = SIDEBAR_W - 20, ly = TOOLBAR_H + 100;
     slR_.setup(lx, ly, lw, "R", { 220, 80, 80, 255 });    ly += 40;
@@ -855,164 +855,118 @@ void PaintWidget::renderCanvas()
     if (canvas_.dirty) canvas_.flush();
 
     const SDL_Rect vp = viewportRect();
+    const float vpL = (float)vp.x, vpT = (float)vp.y;
+    const float vpR = (float)(vp.x + vp.w), vpB = (float)(vp.y + vp.h);
 
-    // --- 1. 背景チェッカーボードのカリング ---
-    constexpr int gx = 16;
-    constexpr int grid2 = gx * 2;
+    // --- 1. 背景チェッカーボード ---
+    constexpr float gx = 16.0f;
+    constexpr float grid2 = gx * 2.0f;
 
     SDL_SetRenderDrawColor(renderer_, 180, 180, 180, 255);
     SDL_RenderFillRect(renderer_, &vp);
 
-    int ox = ((int)panX_ % grid2 + grid2) % grid2;
-    int oy = ((int)panY_ % grid2 + grid2) % grid2;
-
-    int startX = vp.x + ((ox - (vp.x % grid2) + grid2) % grid2) - grid2;
-    int startY = vp.y + ((oy - (vp.y % grid2) + grid2) % grid2) - grid2;
+    float ox = std::fmod(std::fmod(panX_, grid2) + grid2, grid2);
+    float oy = std::fmod(std::fmod(panY_, grid2) + grid2, grid2);
+    float startX = vpL + std::fmod(std::fmod(ox - std::fmod(vpL, grid2), grid2) + grid2, grid2) - grid2;
+    float startY = vpT + std::fmod(std::fmod(oy - std::fmod(vpT, grid2), grid2) + grid2, grid2) - grid2;
 
     SDL_SetRenderDrawColor(renderer_, 210, 210, 210, 255);
 
-    auto drawClippedCell = [&](int cx, int cy) {
-        SDL_Rect r = { cx, cy, gx, gx };
-        SDL_Rect clipped;
-        if (SDL_IntersectRect(&r, &vp, &clipped)) {
-            SDL_RenderFillRect(renderer_, &clipped);
+    auto drawClippedCellF = [&](float cx, float cy) {
+        float dl = std::max(cx, vpL), dt = std::max(cy, vpT);
+        float dr = std::min(cx + gx, vpR), db = std::min(cy + gx, vpB);
+        if (dr > dl && db > dt) {
+            SDL_FRect r = { dl, dt, dr - dl, db - dt };
+            SDL_RenderFillRectF(renderer_, &r);
         }
         };
 
-    for (int y = startY; y < vp.y + vp.h; y += grid2) {
-        for (int x = startX; x < vp.x + vp.w; x += grid2) {
-            drawClippedCell(x, y);
-            drawClippedCell(x + gx, y + gx);
+    for (float y = startY; y < vpB; y += grid2) {
+        for (float x = startX; x < vpR; x += grid2) {
+            drawClippedCellF(x, y);
+            drawClippedCellF(x + gx, y + gx);
         }
     }
 
-    // 枠線を vp 内に限定してカリング描画するヘルパー関数
-    auto drawClippedBorder = [&](const SDL_Rect& rect) {
-        int x1 = rect.x;
-        int y1 = rect.y;
-        int x2 = rect.x + rect.w - 1;
-        int y2 = rect.y + rect.h - 1;
+    // --- テクスチャ描画: src(大まか・整数) → dst(srcからの順算・float) ---
+    // 逆算(dst→src)を一切行わないため、丸め誤差が蓄積しない。
+    // 最終ピクセル境界はCPU丸めでなくGPUシザー(SetClipRect)に委ねる。
+    auto drawTexturedClipped = [&](SDL_Texture* tex, int texW, int texH,
+        float fullLeft, float fullTop, float zoomX, float zoomY) {
 
-        // 上辺
-        if (y1 >= vp.y && y1 < vp.y + vp.h) {
-            int cx1 = std::max(x1, vp.x);
-            int cx2 = std::min(x2, vp.x + vp.w - 1);
-            if (cx1 <= cx2) SDL_RenderDrawLine(renderer_, cx1, y1, cx2, y1);
-        }
-        // 下辺
-        if (y2 >= vp.y && y2 < vp.y + vp.h) {
-            int cx1 = std::max(x1, vp.x);
-            int cx2 = std::min(x2, vp.x + vp.w - 1);
-            if (cx1 <= cx2) SDL_RenderDrawLine(renderer_, cx1, y2, cx2, y2);
-        }
-        // 左辺
-        if (x1 >= vp.x && x1 < vp.x + vp.w) {
-            int cy1 = std::max(y1, vp.y);
-            int cy2 = std::min(y2, vp.y + vp.h - 1);
-            if (cy1 <= cy2) SDL_RenderDrawLine(renderer_, x1, cy1, x1, cy2);
-        }
-        // 右辺
-        if (x2 >= vp.x && x2 < vp.x + vp.w) {
-            int cy1 = std::max(y1, vp.y);
-            int cy2 = std::min(y2, vp.y + vp.h - 1);
-            if (cy1 <= cy2) SDL_RenderDrawLine(renderer_, x2, cy1, x2, cy2);
-        }
+            float fullRight = fullLeft + texW * zoomX;
+            float fullBottom = fullTop + texH * zoomY;
+
+            // 完全に画面外ならスキップ
+            if (fullRight <= vpL || fullLeft >= vpR || fullBottom <= vpT || fullTop >= vpB) return;
+
+            // vpをテクスチャ空間へ逆算するのは「大まかなsrc選定」のためだけに使う。
+            // ここで生じる誤差は後段のdst順算+GPUクリップで吸収されるので問題ない。
+            float texX1 = (vpL - fullLeft) / zoomX;
+            float texY1 = (vpT - fullTop) / zoomY;
+            float texX2 = (vpR - fullLeft) / zoomX;
+            float texY2 = (vpB - fullTop) / zoomY;
+
+            // 外側に1テクセル分の余裕を持たせてfloor/ceil(境界の欠けを防止)
+            SDL_Rect src;
+            src.x = std::clamp((int)std::floor(texX1) - 1, 0, texW);
+            src.y = std::clamp((int)std::floor(texY1) - 1, 0, texH);
+            int srcRight = std::clamp((int)std::ceil(texX2) + 1, 0, texW);
+            int srcBottom = std::clamp((int)std::ceil(texY2) + 1, 0, texH);
+            src.w = srcRight - src.x;
+            src.h = srcBottom - src.y;
+            if (src.w <= 0 || src.h <= 0) return;
+
+            // ★ dst は src(整数)から順算のみで求める。逆算を経由しないので誤差が蓄積しない。
+            SDL_FRect dstF;
+            dstF.x = fullLeft + src.x * zoomX;
+            dstF.y = fullTop + src.y * zoomY;
+            dstF.w = src.w * zoomX;
+            dstF.h = src.h * zoomY;
+
+            // dstF は vp より少し大きい可能性があるが、それはGPUのシザーで正確にクリップされる
+            SDL_RenderCopyF(renderer_, tex, &src, &dstF);
         };
 
-    // --- 2. メインキャンバス（画像＋枠線）のカリング ---
+    auto drawBorderF = [&](float x1, float y1, float x2, float y2) {
+        float cx1 = std::max(x1, vpL), cx2 = std::min(x2, vpR);
+        float cy1 = std::max(y1, vpT), cy2 = std::min(y2, vpB);
+        if (y1 >= vpT && y1 <= vpB && cx1 <= cx2) SDL_RenderDrawLineF(renderer_, cx1, y1, cx2, y1);
+        if (y2 >= vpT && y2 <= vpB && cx1 <= cx2) SDL_RenderDrawLineF(renderer_, cx1, y2, cx2, y2);
+        if (x1 >= vpL && x1 <= vpR && cy1 <= cy2) SDL_RenderDrawLineF(renderer_, x1, cy1, x1, cy2);
+        if (x2 >= vpL && x2 <= vpR && cy1 <= cy2) SDL_RenderDrawLineF(renderer_, x2, cy1, x2, cy2);
+        };
+
+    // クリップはこのブロックの間だけ有効化(ステート変更1回・軽量)
+    SDL_RenderSetClipRect(renderer_, &vp);
+
+    // --- 2. メインキャンバス ---
     const float fullLeft = panX_;
     const float fullTop = panY_;
     const float fullRight = panX_ + canvas_.w * zoom_;
     const float fullBottom = panY_ + canvas_.h * zoom_;
 
-    SDL_Rect fullDst = {
-        (int)std::floor(fullLeft),
-        (int)std::floor(fullTop),
-        (int)std::ceil(fullRight - fullLeft),
-        (int)std::ceil(fullBottom - fullTop)
-    };
+    drawTexturedClipped(canvas_.tex, canvas_.w, canvas_.h, fullLeft, fullTop, zoom_, zoom_);
 
-    SDL_Rect drawDst;
-    if (SDL_IntersectRect(&fullDst, &vp, &drawDst)) {
-        // テクスチャ切り出し位置の精度を高めた逆算
-        float screenX1 = (float)drawDst.x;
-        float screenY1 = (float)drawDst.y;
-        float screenX2 = (float)(drawDst.x + drawDst.w);
-        float screenY2 = (float)(drawDst.y + drawDst.h);
+    SDL_SetRenderDrawColor(renderer_, 80, 80, 80, 255);
+    drawBorderF(fullLeft, fullTop, fullRight, fullBottom);
 
-        float texX1 = (screenX1 - fullLeft) / zoom_;
-        float texY1 = (screenY1 - fullTop) / zoom_;
-        float texX2 = (screenX2 - fullLeft) / zoom_;
-        float texY2 = (screenY2 - fullTop) / zoom_;
-
-        SDL_Rect src;
-        src.x = std::clamp((int)std::floor(texX1), 0, canvas_.w);
-        src.y = std::clamp((int)std::floor(texY1), 0, canvas_.h);
-
-        int srcRight = std::clamp((int)std::ceil(texX2), 0, canvas_.w);
-        int srcBottom = std::clamp((int)std::ceil(texY2), 0, canvas_.h);
-
-        src.w = srcRight - src.x;
-        src.h = srcBottom - src.y;
-
-        if (src.w > 0 && src.h > 0) {
-            SDL_RenderCopy(renderer_, canvas_.tex, &src, &drawDst);
-        }
-
-        // 枠線のカリング描画
-        SDL_SetRenderDrawColor(renderer_, 80, 80, 80, 255);
-        drawClippedBorder(fullDst);
-    }
-
-    // --- 3. 貼り付けプレビュー（画像＋枠線）のカリング ---
+    // --- 3. 貼り付けプレビュー ---
     if (pasting_ && pastePreview_) {
         float sx, sy, ex, ey;
         canvasToScreen(pasteX_, pasteY_, sx, sy);
         canvasToScreen(pasteX_ + clipW_, pasteY_ + clipH_, ex, ey);
 
-        const float pFullLeft = sx;
-        const float pFullTop = sy;
-        const float pFullRight = ex;
-        const float pFullBottom = ey;
+        float pZoomX = (ex - sx) / (float)clipW_;
+        float pZoomY = (ey - sy) / (float)clipH_;
 
-        SDL_Rect pFullDst = {
-            (int)std::floor(pFullLeft),
-            (int)std::floor(pFullTop),
-            (int)std::ceil(pFullRight - pFullLeft),
-            (int)std::ceil(pFullBottom - pFullTop)
-        };
-        SDL_Rect pDrawDst;
+        drawTexturedClipped(pastePreview_, clipW_, clipH_, sx, sy, pZoomX, pZoomY);
 
-        if (SDL_IntersectRect(&pFullDst, &vp, &pDrawDst)) {
-            float pscreenX1 = (float)pDrawDst.x;
-            float pscreenY1 = (float)pDrawDst.y;
-            float pscreenX2 = (float)(pDrawDst.x + pDrawDst.w);
-            float pscreenY2 = (float)(pDrawDst.y + pDrawDst.h);
-
-            float pTexX1 = (pscreenX1 - pFullLeft) / zoom_;
-            float pTexY1 = (pscreenY1 - pFullTop) / zoom_;
-            float pTexX2 = (pscreenX2 - pFullLeft) / zoom_;
-            float pTexY2 = (pscreenY2 - pFullTop) / zoom_;
-
-            SDL_Rect pSrc;
-            pSrc.x = std::clamp((int)std::floor(pTexX1), 0, clipW_);
-            pSrc.y = std::clamp((int)std::floor(pTexY1), 0, clipH_);
-
-            int pSrcRight = std::clamp((int)std::ceil(pTexX2), 0, clipW_);
-            int pSrcBottom = std::clamp((int)std::ceil(pTexY2), 0, clipH_);
-
-            pSrc.w = pSrcRight - pSrc.x;
-            pSrc.h = pSrcBottom - pSrc.y;
-
-            if (pSrc.w > 0 && pSrc.h > 0) {
-                SDL_RenderCopy(renderer_, pastePreview_, &pSrc, &pDrawDst);
-            }
-
-            // プレビュー枠線のカリング描画
-            SDL_SetRenderDrawColor(renderer_, 0, 120, 255, 200);
-            drawClippedBorder(pFullDst);
-        }
+        SDL_SetRenderDrawColor(renderer_, 0, 120, 255, 200);
+        drawBorderF(sx, sy, ex, ey);
     }
+
+    SDL_RenderSetClipRect(renderer_, nullptr);
 }
 void PaintWidget::renderGrid()
 {

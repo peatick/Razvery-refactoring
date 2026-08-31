@@ -220,6 +220,8 @@ private:
             if (SDL_PointInRect(e.nmP, &click_rect)) {
                 all_tree_noneselect(root);  // 全非選択
                 if (e.L_clicks(2)) {        // ダブルクリックで展開
+                    selected_path = child.path;
+                    select_act = true;
                     child.expanded = !child.expanded;
                     if (child.expanded) {
                         buildTree(child);
@@ -298,6 +300,9 @@ public:
     int scrollrow = 0;
     bool fs_text_cache_dirty = true;
     
+    fs::path selected_path;
+    bool select_act = false;
+
     Hscroll_slider hsl;
 
 

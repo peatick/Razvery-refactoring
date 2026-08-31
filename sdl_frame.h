@@ -3,6 +3,7 @@
 #include "Renderer.h"
 #include "Events.h"
 #include "Widget_util.h"
+#include "LD.h"
 #include <algorithm>
 #include <climits>
 #include <deque>
@@ -81,6 +82,13 @@ public:
 	void Widget_Call(const std::string& name) {
 		if (Widget_s.contains(name)) {
 			Widget_Oders.push_back(Widget_s[name].get());
+		}
+	}
+
+	void destroy_Widget(const std::string& name) {
+		if (Widget_s.contains(name)) {
+			Widget_s[name]->Destroyer(renderer);
+			Widget_s.erase(name);
 		}
 	}
 
@@ -229,4 +237,6 @@ public:
 			}
 		}
 	}
+
+
 };

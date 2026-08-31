@@ -46,7 +46,7 @@ public:
 		act = action;
 		SDL_Rect rec = { 0, explorer.size.h - 40, explorer.size.w, 40 };
 		File_act_btn = { rec.x + 50 + (rec.w / 3) * 2 + 10 , rec.y, 70, 20 };
-		File_name_ed.set_init({ rec.x + 50, rec.y, (rec.w / 3) * 2 - 10, 20 }, "", renderer.lineH);
+		File_name_ed.set_init({ rec.x + 50, rec.y, (rec.w / 3) * 2 - 10, 25 }, "", renderer.lineH);
 		File_name_ed.PADDING = 5;
 		File_name_ed.noLineNo = true;
 		act_btn.init(renderer, act, File_act_btn, false);
@@ -116,12 +116,25 @@ public:
 				fs::path file_n;
 				explorer.u8string_to_path(file_u8, file_n);
 				fs::path selected_path = explorer.path_box / file_n;
-				if (fs::exists(selected_path)) {
-					file_exits_True(selected_path);
+				if (File_extension != "dir") {
+					if (fs::exists(selected_path)) {
+						file_exits_True(selected_path);
+					}
+					else {
+						// ファイルが存在しない場合の処理
+						file_exits_False(selected_path);
+					}
 				}
 				else {
-					// ファイルが存在しない場合の処理
-					file_exits_False(selected_path);
+					if (explorer.path_box.filename() == file_n) {
+						if (fs::exists(explorer.path_box)) {
+							file_exits_True(explorer.path_box);
+						}
+						else {
+							// ファイルが存在しない場合の処理
+							file_exits_False(explorer.path_box);
+						}
+					}
 				}
 			}
 		}
@@ -141,11 +154,71 @@ public:
 	}
 };
 
-class File_Open : public File_Ed{
+class File_Open : public File_Ed {
 public:
+	bool EX_eq(fs::path p) {
+		std::string ps = path2string_s(p.extension());
+		if (!ps.empty() && !File_extension.empty()) {
+			return equals_ignore_case(ps, File_extension);
+		}
+		return false;
+	}
+	bool isValidFilename(const fs::path& test_path) {
+		std::error_code ec;
+
+		if (fs::exists(test_path)) return true;
+
+		// 1. テスト用の出力ストリームを開く（作成を試みる）
+		std::ofstream ofs(test_path, std::ios::out | std::ios::trunc);
+
+		// 開けなかった場合は不正文字、権限エラー、パス長超過など
+		if (!ofs.is_open()) {
+			return false;
+		}
+
+		// 2. 作成に成功したらストリームを閉じる
+		ofs.close();
+
+		// 3. テストで作ったゴミファイルを確実に削除する
+		fs::remove(test_path, ec);
+
+		return true;
+	}
+	std::string temp_path_OW;
+	WD_Btn MkDir_B;
+public:
+
+	void init_e(std::string ex) override {
+		File_Ed::init_e(ex);
+		SDL_Rect rec = { 0, explorer.size.h - 40, explorer.size.w, 40 };
+		MkDir_B.init(*rendererD, "+Dir", { rec.x + 50 + (rec.w / 3) * 2 + 90 , rec.y, 70, 20 }, false);
+	}
 	void file_exits_True(fs::path FilePath) override {
 		relese = true;
 		pStr = path2string_s(FilePath);
+	}
+	void HandleEvent(EventHandler& ev_h) override {
+		File_Ed::HandleEvent(ev_h);
+		MkDir_B.handleEvent(ev_h);
+	}
+	void update() override {
+		File_Ed::update();
+		if (MkDir_B.Active) {
+			std::string name = File_name_ed.buf.line(0);
+			if (!name.empty()) {
+				fs::path name_p = str2path(name);
+				fs::path make_dir_path = explorer.path_box / name_p;
+				fs::create_directory(make_dir_path);
+			}
+		}
+	}
+	void render(Renderer& renderer) override {
+		File_Ed::render(renderer);
+		MkDir_B.render(renderer);
+	}
+	void destroy() override {
+		File_Ed::destroy();
+		MkDir_B.destroy(*rendererD);
 	}
 };
 
@@ -269,3 +342,86 @@ public:
 		SDL_DestroyTexture(warm_tex);
 	}
 };
+
+class File_Simple : public File_Ed{
+private:
+	SDL_Rect File_act_btn;
+	std::string act = "Open";
+	SDL_Texture* exten_W = nullptr;
+	SDL_Point start_P = { 0,0 };
+	bool EX_eq(fs::path p) {
+		std::string ps = path2string_s(p.extension());
+		if (!ps.empty() && !File_extension.empty()) {
+			return equals_ignore_case(ps, File_extension);
+		}
+		return false;
+	}
+protected:
+public:
+	fs::path path_box = "";
+
+	virtual void file_exits_True(fs::path FilePath) {
+
+	}
+	virtual void file_exits_False(fs::path FilePath) {
+		if (EX_eq(FilePath)) {
+			pStr = path2string_s(FilePath);
+			relese = true;
+		}
+		else {
+			pStr = path2string_s(FilePath) + File_extension;
+			relese = true;
+		}
+		
+	}
+
+	void inits(Renderer& renderer, SDL_Rect rec, std::string action = "Open") {
+		act = action;
+		File_act_btn = { rec.x + 50 + (rec.w / 3) * 2 + 10 , rec.y, 70, 20 };
+		File_name_ed.set_init({ rec.x + 50, rec.y, (rec.w / 3) * 2 - 10, 25 }, "", renderer.lineH);
+		File_name_ed.PADDING = 5;
+		File_name_ed.noLineNo = true;
+		act_btn.init(renderer, act, File_act_btn, false);
+		start_P = { rec.x + 50 + (rec.w / 3) * 2 + 10, rec.y - 15 };
+		rendererD = &renderer;
+	}
+
+	void init_e(std::string ex) override{
+		File_extension = ex;
+		exten_W = rendererD->text_texture(ex);
+	}
+
+	void HandleEvent(EventHandler& ev_h) override {
+		ev_h.textEditEvent_sh(File_name_ed, true);
+		act_btn.handleEvent(ev_h);
+	}
+	void update() override {
+		if (act_btn.Active) {
+			std::string fn = File_name_ed.buf.line(0);
+			if (!fn.empty()) {
+				fs::path file_n = str2path(fn);
+				fs::path selected_path = path_box / file_n;
+				if (File_extension != "dir") {
+					if (fs::exists(selected_path)) {
+						file_exits_True(selected_path);
+					}
+					else {
+						// ファイルが存在しない場合の処理
+						file_exits_False(selected_path);
+					}
+				}
+			}
+		}
+	}
+	void render(Renderer& renderer) override {
+		renderer.TextBoxsh(File_name_ed);
+		act_btn.render(renderer);
+		renderer.drawtexture(exten_W, start_P.x, start_P.y);
+		update();
+	}
+	void destroy() override {
+		act_btn.destroy(*rendererD);
+		SDL_DestroyTexture(exten_W);
+	}
+};
+

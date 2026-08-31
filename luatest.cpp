@@ -4,6 +4,11 @@
 
 int main(int argc, char* argv[]) {
     GameEngine ge;
+	AssetLoader AL;
+	if (!AL.init()) {
+		return 0;
+	}
+	
 
     ge.init();
 
@@ -16,11 +21,10 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     ge.scenes["main"] = scene();
-    ge.s = &ge.scenes["main"];
-	scene& sc = *ge.s;
+    ge.Now_Scene = &ge.scenes["main"];
+	scene& sc = *ge.Now_Scene;
 	sc.init(ge.lua);
 	ge.lua.script_file("test.lua");
-
 	ge.ks.set_keybind('d', "move_up");
 
     std::vector<std::function<void()>> ev;
@@ -33,28 +37,23 @@ int main(int argc, char* argv[]) {
 		ge.update(wm.mf.renderer);
         });
     rd.push_back([&]() {
-		ge.s->update_Renderer(wm.mf.renderer);
+		ge.Now_Scene->update_Renderer(wm.mf.renderer);
 		});
 	dt_timer dt_t;
-	dt_t.set_time = 1; // 60 FPS
+	dt_t.set_time = 1;
 
-	Uint32 frameStart, frameTime,lasttime;
-	int fps = 60;
-	int frameDelay = 1000 / fps;
-	lasttime = SDL_GetTicks();
+	
+	ge.lasttime = SDL_GetTicks();
     while (wm.mf.running) {
-		frameStart = SDL_GetTicks();
-		float deltaTime = (frameStart - lasttime) / 1000.0f; // 秒単位のデルタタイム
+		float deltaTime = ge.delta_time();
+		
 		//printf("Delta Time: %.6f seconds\n", deltaTime);
         ge.lua_update(deltaTime);
 		wm.deb_f(ev, rd);
 		ge.ks.reset();
-        frameTime = SDL_GetTicks() - frameStart;
-		lasttime = SDL_GetTicks();
-		if (frameTime < frameDelay) {
-			SDL_Delay(frameDelay - frameTime);
-			//std::cout << "Frame Time: " << frameTime << " ms, Delayed for: " << (frameDelay - frameTime) << " ms" << std::endl;
-		}
+
+		ge.flame_delay();
     }
     wm.exit();
+	return 0;
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include "sdl2/include/SDL.h"
 #include "sdl2/include/SDL_ttf.h"
+#include "sdl2/include/SDL_image.h"
 #include <algorithm>
 #include <climits>
 #include <deque>
@@ -32,7 +33,8 @@ static constexpr Uint32 BLINK_MS = 530;
 size_t utf8_length(const std::string& s);
 std::string utf8_substr(const std::string& s, size_t char_count);
 fs::path str2path(std::string sp);
-
+std::string path2string_s(const fs::path& p);
+bool equals_ext(fs::path a, std::string path_b);
 namespace fs = std::filesystem;
 namespace utf8 {
     inline int charLen(const std::string& s, int i) {
@@ -650,7 +652,6 @@ public:
         if (now - last_update > update_delay){
             update = true;
             last_update = now;
-            std::cout << "aaa\n";
         }
     }
     void file_sort(){

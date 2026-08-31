@@ -66,38 +66,6 @@ public:
                 Name_Body.push_back({ entity_id, data["name"] });
             }
             };
-		lua["get_com"] = [this, &lua](uint32_t entity_id, std::string com_type) -> sol::table {
-			if (com_type == "Render_body") {
-				for (const auto& r : Render_Body) {
-					if (r.Entity_ID == entity_id) {
-						sol::table data = lua.create_table();
-						data["w"] = r.w;
-						data["h"] = r.h;
-						return data;
-					}
-				}
-			}
-			else if (com_type == "pos") {
-				for (const auto& p : Pos) {
-					if (p.Entity_ID == entity_id) {
-						sol::table data = lua.create_table();
-						data["x"] = p.x;
-						data["y"] = p.y;
-						return data;
-					}
-				}
-			}
-			else if (com_type == "Name") {
-				for (const auto& n : Name_Body) {
-					if (n.Entity_ID == entity_id) {
-						sol::table data = lua.create_table();
-						data["name"] = n.name;
-						return data;
-					}
-				}
-			}
-			return sol::nil; // 見つからなかった場合はnilを返す
-			};
         lua["add_newLuaCom"] = [this](uint32_t entity_id, sol::table data, std::string com_type) {
 			if (LuaCom_Body.find(com_type) == LuaCom_Body.end()) {
 				LuaCom_Body[com_type] = std::vector<LuaCom>();
@@ -170,6 +138,11 @@ public:
                     end
                 end
                 return match_entities
+            end
+            function for_each(com_name, callback_func)
+	            for ent_id, com_data in pairs(get_entity_with(table.unpack(com_name))) do
+		            callback_func(com_data)
+	            end
             end
         )");
 

@@ -2,11 +2,12 @@
 #include "sdlutil.h"
 #include "PaintTool.h"
 #include "widget.h"
+#include "TXEdit_P.h"
 
 class Renderer {
 
 
-    SDL_Color colBg = { 30,  30,  35,  255 };
+    
     SDL_Color colText = { 220, 220, 210, 255 };
     SDL_Color colSel = { 60,  100, 170, 180 };
     SDL_Color colCaret = { 230, 200, 100, 255 };
@@ -16,6 +17,7 @@ class Renderer {
 
 
 public:
+    SDL_Color colBg = { 30,  30,  35,  255 };
     TTF_Font* font = nullptr;
     TTF_Font* font_sml = nullptr;
     SDL_Renderer* ren = nullptr;
@@ -82,7 +84,9 @@ public:
     }
     void drawText(const std::string& s, int x, int y, SDL_Color col) {
         if (s.empty()) return;
-        SDL_Surface* surf = TTF_RenderUTF8_Solid(font, s.c_str(), col);
+        std::string s_t = s;
+        std::replace(s_t.begin(), s_t.end(), '\t', ' ');
+        SDL_Surface* surf = TTF_RenderUTF8_Solid(font, s_t.c_str(), col);
         if (!surf) return;
         SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, surf);
         SDL_FreeSurface(surf);
@@ -469,6 +473,15 @@ public:
         if (!tex) return nullptr;
         return tex;
     }
+    SDL_Texture* text_texture_white(std::string bka) {
+        SDL_Surface* surf = TTF_RenderUTF8_Solid(font_sml, bka.c_str(), colText);
+        if (!surf) return nullptr;
+        SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, surf);
+        SDL_FreeSurface(surf);
+        if (!tex) return nullptr;
+        return tex;
+    }
+
     void drw_button(Widget_button& b) {
         if (b.button.text_texture == nullptr) b.button.text_texture = text_texture(b.button.btn_name);
         if (b.button.hovered) {
@@ -549,5 +562,116 @@ public:
     void drw_PaintTool(PaintApp& pt) {
         pt.render(ren);
     }
+
+    void drawInrayHint(int x, int y, const Editor_syntaxed::Hint_Pl& H) {
+        if (H.fn_name.empty()) return;
+        x = x + textWidth(H.bef);
+        int w = textWidth(H.fn_name + H.param);
+        SDL_Rect R = { x, y, w + 20, 20 };
+        SDL_SetRenderDrawColor(ren, 200, 200, 200, 255);
+        SDL_RenderFillRect(ren, &R);
+        drawText(H.fn_name, x + 10, y, { 87, 128, 6 , 255});
+        x += textWidth(H.fn_name);
+        drawText(H.param, x + 10, y, {20, 20, 20, 255});
+    }
+
+    void drawText_Sy(const lualex::LuaLexer& L, int ln, int x, int y) {
+        auto [tokens, colors, types] = L.getLineTokensWithTypes(ln);
+        for (size_t i = 0; i < tokens.size(); ++i) {
+            drawText(tokens[i], x, y, colors[i]);
+            x += textWidth(tokens[i]);
+        }
+    }
+
+    void TextBox_Syn(Editor_syntaxed& Ed_s) {
+        Editor& ed = Ed_s.TextEditor;
+        int linenoW = ed.noLineNo ? 0 : 50;
+        ed.lineH = lineH;
+        ed.viewRows = (ed.TX_Rect.h - PADDING * 2) / lineH;
+        ed.viewW = ed.TX_Rect.w - linenoW - PADDING;
+        SDL_Rect bgrect = ed.TX_Rect;
+        SDL_SetRenderDrawColor(ren, colBg.r, colBg.g, colBg.b, 255);
+        SDL_RenderFillRect(ren, &bgrect);
+
+        SDL_Rect clip = { linenoW + PADDING + ed.TX_Rect.x, PADDING + ed.TX_Rect.y, ed.TX_Rect.w - (linenoW + PADDING), (ed.TX_Rect.y + ed.TX_Rect.h) - PADDING * 2 };
+        SDL_RenderSetClipRect(ren, &clip);
+
+        int x0 = linenoW + PADDING - ed.scrollX;
+        int last = std::min(ed.scrollRow + ed.viewRows + 1, ed.buf.numLines());
+
+        if (!Ed_s.Lua_src_Lex.LL) return;
+        const lualex::LuaLexer& L = *Ed_s.Lua_src_Lex.LLSet->find(Ed_s.Lua_src_Lex.key);
+
+        int cursor_y = 0;
+        for (int row = ed.scrollRow; row < last; ++row) {
+            int y = PADDING + (row - ed.scrollRow) * lineH;
+            const std::string& ln = ed.buf.line(row);
+
+            // Selection
+            if (ed.hasSelection) {
+                auto a = ed.selMin(), b = ed.selMax();
+                if (row >= a.row && row <= b.row) {
+                    int xf = (row == a.row) ? textWidth(ln.substr(0, a.col)) : 0;
+                    int xt = (row == b.row) ? textWidth(ln.substr(0, b.col)) : textWidth(ln) + 8;
+                    SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
+                    SDL_SetRenderDrawColor(ren, colSel.r, colSel.g, colSel.b, colSel.a);
+                    SDL_Rect sr = { x0 + xf + ed.TX_Rect.x,y + ed.TX_Rect.y,xt - xf,lineH };
+                    SDL_RenderFillRect(ren, &sr);
+                }
+            }
+
+            if (!ln.empty()) drawText_Sy(L, row, x0 + ed.TX_Rect.x, y + ed.TX_Rect.y);
+
+            // IME preedit
+            if (!ed.imeComposing.empty() && row == ed.cursor.row) {
+                int cx = textWidth(ln.substr(0, ed.cursor.col));
+                int pw = textWidth(ed.imeComposing);
+                SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
+                SDL_SetRenderDrawColor(ren, colImeBg.r, colImeBg.g, colImeBg.b, colImeBg.a);
+                SDL_Rect pr = { x0 + cx + ed.TX_Rect.x,y + ed.TX_Rect.y,pw,lineH }; SDL_RenderFillRect(ren, &pr);
+                SDL_SetRenderDrawColor(ren, colIme.r, colIme.g, colIme.b, 220);
+                //アンダーライン
+                SDL_RenderDrawLine(ren, x0 + cx + ed.TX_Rect.x, y + lineH - 2 + ed.TX_Rect.y, x0 + cx + pw + ed.TX_Rect.x, y + lineH - 2 + ed.TX_Rect.y);
+                drawText(ed.imeComposing, x0 + cx + ed.TX_Rect.x, y + ed.TX_Rect.y, colIme);
+                //int icx=cx+textWidth(ed.imeComposing.substr(0,ed.imeCursor));
+                int icx = cx + textWidth(utf8_substr(ed.imeComposing, ed.imeCursor));
+                SDL_SetRenderDrawColor(ren, colIme.r, colIme.g, colIme.b, 255);
+                SDL_Rect cr = { x0 + icx + ed.TX_Rect.x,y + ed.TX_Rect.y,CURSOR_WIDTH,lineH }; SDL_RenderFillRect(ren, &cr);
+            }
+            if (row == ed.cursor.row && ed.imeComposing.empty()) {
+                cursor_y = y;
+            }
+
+            // Caret
+            if (ed.caretOn && row == ed.cursor.row && ed.imeComposing.empty()) {    
+                int cx = textWidth(ln.substr(0, ed.cursor.col));
+                SDL_SetRenderDrawColor(ren, colCaret.r, colCaret.g, colCaret.b, 255);
+                SDL_Rect cr = { x0 + cx + ed.TX_Rect.x,y + ed.TX_Rect.y,CURSOR_WIDTH,lineH }; SDL_RenderFillRect(ren, &cr);
+            }
+        }
+        Editor_syntaxed::Hint_Pl H = Ed_s.tok(ed.cursor.row, ed.cursor.col);
+        drawInrayHint(x0 + ed.TX_Rect.x, cursor_y + 20 + ed.TX_Rect.y, H);
+
+
+        SDL_RenderSetClipRect(ren, nullptr);
+        if (!ed.noLineNo) {
+            // Line numbers
+            SDL_SetRenderDrawColor(ren, 40, 40, 48, 255);
+            SDL_Rect lnbg = { ed.TX_Rect.x, ed.TX_Rect.y, 50, ed.TX_Rect.h }; SDL_RenderFillRect(ren, &lnbg);
+            for (int r = ed.scrollRow; r < last; ++r)
+                drawText(std::to_string(r + 1), ed.TX_Rect.x + 5 + PADDING, ed.TX_Rect.y + (r - ed.scrollRow) * lineH + PADDING, colLineno);
+        }
+        // Status bar
+        SDL_SetRenderDrawColor(ren, 20, 20, 25, 255);
+        SDL_Rect sb = { ed.TX_Rect.x,ed.TX_Rect.y + ed.TX_Rect.h - 24,ed.TX_Rect.w, 24 }; SDL_RenderFillRect(ren, &sb);
+        std::string status =
+            "Ln " + std::to_string(ed.cursor.row + 1) +
+            " Col " + std::to_string(utf8::countChars(ed.buf.line(ed.cursor.row), ed.cursor.col) + 1) +
+            " Undo:" + std::to_string(ed.history.undoCount()) +
+            " Redo:" + std::to_string(ed.history.redoCount());
+        drawText(status, PADDING + ed.TX_Rect.x, ed.TX_Rect.y + ed.TX_Rect.h - PADDING - 4, colLineno);
+        adjustHorizontalScroll(ed);
+    }
+
 
 };
