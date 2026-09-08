@@ -1,6 +1,7 @@
 #include "skelt_f.h"
 #include "UI_Cfg.h"
 #include "LD.h"
+#include "core.h"
 
 int main(int argc, char* argv[]) {
     
@@ -14,16 +15,20 @@ int main(int argc, char* argv[]) {
     }
     UI_BTNS_MEN Btn_LT;
     AssetLoader AL;
+	GameEngine MDGW_Core;
+
     auto w_f_tree = wm.mf.addwidget_t<Widget_TreeExplorer>({ 0,20,200,605 }, 1, "Tree_Ex");
     auto w_tab = wm.mf.addwidget_t<Widget_Lua_Tab_s>({200, 40, 800, 430}, 1, "Tabs");
     auto w_EditorTab = wm.mf.addwidget_t<Widget_Tab_System_u>({200, 0, 400, 20}, 1, "EdTab");
     auto w_paint = wm.mf.addwidget_t<Widget_Paint_v2>({ 0, 20, 1000, 605 }, 1, "PaintTool");
     auto w_maped = wm.mf.addwidget_t<Widget_Map_Ed_u>({ 200, 20, 800, 605 }, 1, "MapEditor");
 
+	
+
     Btn_LT.beside_Btn(wm, "Men", { "File", "Edit", "View", "Tools", "Setting" }, { 0,0 });
     Btn_LT.Vertical_Btn(wm, "File", { "New Project", "New", "Save", "Save as" }, { 0, 20 });
-    wm.mf.w_addbtn("GameEngine_Play", "GameEngine", "Play", {600, 0, 70, 20});
-    wm.mf.w_addbtn("GameEngine_Debug", "GameEngine", "Debug", { 670, 0, 70, 20 });
+    wm.mf.w_addbtn("GameEngine_Play", "GameEngine", "Play", {860, 0, 70, 20});
+    wm.mf.w_addbtn("GameEngine_Debug", "GameEngine", "Debug", { 930, 0, 70, 20 });
 
     if (!AL.init()) {
         wm.new_dialog_Open("dir", [&](std::string s) {
@@ -39,9 +44,17 @@ int main(int argc, char* argv[]) {
         PaintTool,
         MapEditor
     };
+	bool gamemode = false;
     while (wm.running) {
         wm.mf.Widget_Call("EdTab");
-        wm.mf.q_Btn("GameEngine_Play");
+        if (wm.mf.q_Btn("GameEngine_Play")) {
+			wm.new_window(800, 600, 800, 600, "MDGW GameEngine");
+			wm.Stop_MF = true;
+            gamemode = true;
+			auto game_engine = wm.window_map["MDGW GameEngine"]->addwidget_t<GameEngine_W>({ 0, 0, 1000, 625 }, 1, "GameEngine");
+			game_engine->ge.new_scene("entry", path2string_s(AL.projectpath / AL.scriptpath / "entry.lua"));
+            game_engine->ge.ks.set_keybinds(AL.binds);
+        }
         wm.mf.q_Btn("GameEngine_Debug");
         if (w_EditorTab->selected() == scriptEditor){
             AL.LuaLex_update();
@@ -206,6 +219,13 @@ int main(int argc, char* argv[]) {
                     }
                 }
             }
+        }
+
+		if (!wm.Stop_MF) {
+			gamemode = false;
+		}
+        if (gamemode) {
+			wm.window_map["MDGW GameEngine"]->Widget_Call("GameEngine");
         }
         wm.dialog_EV();
         wm.events();

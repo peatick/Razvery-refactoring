@@ -34,12 +34,23 @@ public:
         return true;
     }
 
-
-
     std::string get(const std::string& section, const std::string& key,
         const std::string& def = "") const {
         auto it = data.find(section + "." + key);
         return (it != data.end()) ? it->second : def;
+    }
+    std::unordered_map<std::string, std::string> get_section(const std::string& section) {
+        std::unordered_map<std::string, std::string> rt;
+        for (const auto& data : data) {
+            if (data.first.starts_with(section)) {
+                auto pos = data.first.find(".");
+                if (pos != std::string::npos) {
+                    std::string name = data.first.substr(pos + 1);  // "name"
+                    rt[name] = data.second;
+                }
+            }
+        }
+        return rt;
     }
 
 private:

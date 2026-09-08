@@ -14,6 +14,12 @@ private:
     };
 public:
     int now_key_code = 0;
+	void set_keybinds(std::unordered_map<std::string, SDL_Keycode> binds) {
+		for (const auto& [fn_name, e_key] : binds) {
+			set_keybind(e_key, fn_name);
+		}
+	}
+
     void set_keybind(SDL_Keycode e_key, std::string fn_name) {
         SDL_Scancode p_key = SDL_GetScancodeFromKey(e_key);
         key_bind[fn_name] = { e_key, p_key };
@@ -75,6 +81,8 @@ public:
     Uint32 frameStart, frameTime, lasttime;
     int fps = 60;
     int frameDelay = 1000 / fps;
+	bool crash = false;
+	std::string error_msg = "";
 
     float delta_time() {
         frameStart = SDL_GetTicks();
@@ -93,18 +101,28 @@ public:
     SDL_Rect size = { 0, 0, 0, 0 };
     sol::state lua;
     keybord_states ks;
-    std::vector<std::string> Scnene_ID;
     std::unordered_map<std::string, scene> scenes;
     scene* Now_Scene = nullptr;
-    void Scene_Set(int id) {
-        if (scenes.contains(Scnene_ID[id])) {
-            Now_Scene = &scenes[Scnene_ID[id]];
-        }
-    }
+
+	void new_scene(std::string name, std::string lua_sc) {
+        init();
+		scenes[name] = scene{};
+		Now_Scene = &scenes[name];
+        Now_Scene->init(lua);
+        try {
+            lua.script_file(lua_sc);
+		}
+		catch (const sol::error& e) {
+			std::cout << "Lua error : " << e.what() << std::endl;
+			crash = true;
+			error_msg = e.what();
+		}
+	}
 
 	sol::function lua_update;
 
     void init() {
+        lua = sol::state{};
         lua.open_libraries(
 			sol::lib::base, sol::lib::math, sol::lib::string, sol::lib::table, sol::lib::os,
 			sol::lib::bit32, sol::lib::io, sol::lib::coroutine, sol::lib::utf8
@@ -169,9 +187,10 @@ public:
     }
 
     void update(Renderer& rend) {
-        
         render(rend);
 		ks.update();
     }
+
+
 };
 

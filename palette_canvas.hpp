@@ -20,6 +20,7 @@
 
 class PaletteCanvas : public Canvas {
 public:
+    int selected_flags[8];
     PaletteCanvas(SDL_Renderer* renderer, Tileset& tileset, SDL_Rect viewport)
         : Canvas(renderer, tileset.texture(), viewport), tileset_(tileset) {
         setGrid(static_cast<float>(Tileset::kTileSize), SDL_Color{ 80, 80, 80, 160 });
@@ -67,7 +68,9 @@ protected:
 
     void onOverlayRender() override {
         SDL_Renderer* r = renderer();
-        int selected_flags[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+        for (int i = 0; i < 8; i++) {
+            selected_flags[i] = 0;
+        }
         // 各タイルのフラグ状況を小さなドットで表示
         for (int index = 0; index < tileset_.tileCount(); ++index) {
             const uint8_t bits = tileset_.flagBits(index);
@@ -90,18 +93,14 @@ protected:
                 SDL_SetRenderDrawBlendMode(r, SDL_BLENDMODE_BLEND);
                 SDL_SetRenderDrawColor(r, c.r, c.g, c.b, 230);
                 SDL_RenderFillRectF(r, &dot);
-
                 if (selectedTile_ == index) {
                     selected_flags[bit] = 1;
-                    std::cout << index << "=" << bit << std::endl;
                 }
             }
         }
-
         // 選択中タイルの枠
         if (selectedTile_ >= 0) {
             drawTileOutline(selectedTile_, SDL_Color{ 255, 255, 0, 255 });
-            
         }
         // ホバー中タイルの枠(薄め)
         if (hoveredTile_ >= 0 && hoveredTile_ != selectedTile_) {

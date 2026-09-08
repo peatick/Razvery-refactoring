@@ -20,6 +20,7 @@ public:
     SDL_Color colBg = { 30,  30,  35,  255 };
     TTF_Font* font = nullptr;
     TTF_Font* font_sml = nullptr;
+    TTF_Font* font_err = nullptr;
     SDL_Renderer* ren = nullptr;
     SDL_Texture* folderIcon = nullptr;
     SDL_Texture* fileIcon = nullptr;
@@ -39,9 +40,10 @@ public:
 
         font = TTF_OpenFont(fontPath, FONT_SIZE);
         font_sml = TTF_OpenFont(fontPath, FONT_SIZE);
+		font_err = TTF_OpenFont(fontPath, FONT_SIZE);
         if (!font) {
             const char* fb[] = {
-                "fonts\\PixelMplus10-Bold.ttf",
+                "fonts\\PixelMplus12-Bold.ttf",
                 "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
                 "/usr/share/fonts/TTF/DejaVuSansMono.ttf",
                 "/System/Library/Fonts/Menlo.ttc",
@@ -52,6 +54,7 @@ public:
             };
             for (int i = 0; fb[i] && !font; ++i) font = TTF_OpenFont(fb[i], FONT_SIZE);
             for (int i = 0; fb[i] && !font_sml; ++i) font_sml = TTF_OpenFont(fb[i], FONTSML_SIZE);
+            for (int i = 0; fb[i] && !font_err; ++i) font_err = TTF_OpenFont(fb[i], 44);
         }
         if (!font) {
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Font: %s", TTF_GetError());
@@ -673,5 +676,27 @@ public:
         adjustHorizontalScroll(ed);
     }
 
+    void Error_msg(std::string msg, SDL_Rect bg_rect) {
+		SDL_SetRenderDrawColor(ren, 0, 60, 180, 255);
+		SDL_RenderFillRect(ren, &bg_rect);
+        SDL_Surface* surf = TTF_RenderUTF8_Solid(font_err, "Script Stop Error!", {220, 220, 220, 255});
+        if (!surf) return;
+        SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, surf);
+        SDL_FreeSurface(surf);
+        if (!tex) return;
+        int w, h; SDL_QueryTexture(tex, nullptr, nullptr, &w, &h);
+        SDL_Rect dst = { 10,10,w,h };
+        SDL_RenderCopy(ren, tex, nullptr, &dst);
+        SDL_DestroyTexture(tex);
 
+		drawText("This script has crashed. Please check the error message below.", 10, 70, { 220, 220, 220, 255 });
+
+		std::stringstream ss(msg);
+		std::string line;
+		int y_offset = 100;
+        while (std::getline(ss, line)) {
+            drawText(line, 10, y_offset, { 220, 220, 220, 255 });
+            y_offset += 20;
+        }
+    }
 };

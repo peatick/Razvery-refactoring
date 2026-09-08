@@ -23,6 +23,41 @@ public:
 	lualex::LuaLexerSet Lua_src_set;
 
 	Config Cfg;
+	std::unordered_map<std::string, SDL_Keycode> binds;
+
+	SDL_Keycode toKeycode(const std::string& s) {
+		// 1文字なら ASCII → SDL_Keycode（SDLK_a など）にそのまま使える
+		if (s.size() == 1) {
+			char c = s[0];
+
+			// 大文字なら小文字に変換（SDL は a〜z の ASCII を使う）
+			if ('A' <= c && c <= 'Z') {
+				c = c - 'A' + 'a';
+			}
+
+			// 英字ならそのまま SDL_Keycode として使える
+			if ('a' <= c && c <= 'z') {
+				return c;  // SDLK_a〜SDLK_z と同じ値
+			}
+		}
+
+		// 特殊キーの分岐
+		if (s == "space") return SDLK_SPACE;
+		if (s == "tab")   return SDLK_TAB;
+		if (s == "alt")   return SDLK_LALT;   // 右ALTなら SDLK_RALT
+		if (s == "ctrl")  return SDLK_LCTRL;  // 右CTRLなら SDLK_RCTRL
+		if (s == "shift") return SDLK_LSHIFT; // 右SHIFTなら SDLK_RSHIFT
+
+		return SDLK_UNKNOWN;
+	}
+
+
+	void load_binds() {
+		std::unordered_map<std::string, std::string> tm = Cfg.get_section("Key_Binds");
+		for (const auto& b : tm) {
+			binds[b.first] = toKeycode(b.second);
+		}
+	}
 
 	bool init() {
 		if (Cfg.load("Project.MDGW")) {
@@ -32,8 +67,12 @@ public:
 			fs::create_directory(projectpath / "img");
 			fs::create_directory(projectpath / "script");
 			fs::create_directory(projectpath / "maps");
+
+			load_binds();
+
 			return true;
 		}
+
 		return false;
 	}
 
@@ -63,6 +102,16 @@ public:
 				Lua_src_set.set(path_str_key, scripts[path_str_key]);
 			}
 		}
+		std::string template_script = R"(
+		function keyPressed(fnc_str)		
+		function keyPressDown(fnc_str)
+		function keyPressUp(fnc_str)
+		function Sys_Reg(function_)
+		function create_entity()
+		function add_newCom(entity_id, data, com_type)
+		function for_each(com_name_table, callback_func)
+		)";
+		Lua_src_set.set("template_script", template_script);
 		return true;
 	}
 

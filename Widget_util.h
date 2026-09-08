@@ -10,6 +10,7 @@
 #include "Tab.h"
 #include "map_canvas.hpp"
 #include "palette_canvas.hpp"
+#include "core.h"
 #include "tileset.hpp"
 #include <functional>
 #include <algorithm>
@@ -392,11 +393,23 @@ public:
 					if (SDL_PointInRect(ev.nmP, &it->r)) {
 						SDL_DestroyTexture(it->title_tex);
 						int d = std::distance(tabs.begin(), it);
+
+						// --- Lua_Editor の要素を左に詰める処理 ---
 						Lua_Editor[d].ed_u.reset();
+
+						// tabs.size() は消去前のサイズなので、d から最後の1つ手前までシフト
+						int current_tab_count = static_cast<int>(tabs.size());
+						for (int i = d; i < current_tab_count - 1; ++i) {
+							Lua_Editor[i] = std::move(Lua_Editor[i + 1]);
+						}
+						// 末尾に残った要素をクリア
+						Lua_Editor[current_tab_count - 1].ed_u.reset();
+						// ----------------------------------------
+
 						it = tabs.erase(it);
 						erased = true;
 						if (close_ev) close_ev();
-						continue;  // erase 後は必ず continue
+						continue;  // erase 後は continue
 					}
 					if (erased) {
 						it->r.x -= tab_wide;
@@ -604,7 +617,7 @@ public:
 		widget_name = name;
 		widget_layer = layer;
 		int wid = rec.w / 5;
-		paletteViewport = {rec.x, rec.y + 20, wid, rec.h - 20};
+		paletteViewport = {rec.x, rec.y + 20, wid, rec.h - 200};
 		mapViewport = { rec.x + wid, rec.y + 20 , wid * 4, rec.h - 20};
 		render_ = renderer.ren;
 		Nosave_M = renderer.text_texture_white("*");
@@ -634,6 +647,14 @@ public:
 
 		if (active) {
 			palette_p->render();
+			renderer.drawText("Selected Tile: " + std::to_string(palette_p->selectedTile()),
+				paletteViewport.x, paletteViewport.y + paletteViewport.h, { 220, 220, 220, 255 });
+			for (int i = 0;i < 8;i++){
+				SDL_Rect tileinfo = { paletteViewport.x, paletteViewport.y + paletteViewport.h + 20, paletteViewport.w, 200};
+				renderer.drawText(" Flag " + std::to_string(i) + ": " + std::to_string(palette_p->selected_flags[i]),
+					tileinfo.x, tileinfo.y + i * 20, { 220, 220, 220, 255 });
+			}
+			std::cout << std::endl;
 		}
 		if (active_m) {
 			mapCanvas_p->render();
@@ -683,5 +704,45 @@ public:
 	}
 	void Destroyer(Renderer& renderer) override {
 		SDL_DestroyTexture(Nosave_M);
+	}
+};
+
+class GameEngine_W : public Widget_util {
+public:
+	GameEngine ge;
+	void init(Renderer& renderer, WidgetManager& w_mgr, const SDL_Rect& rec, int layer, const std::string& name) override {
+		ge.lasttime = SDL_GetTicks();
+		widget_rect = rec;
+		widget_name = name;
+		widget_layer = layer;
+	}
+	void Event(EventHandler& ev_h, WidgetManager& w_mgr) override {
+		ge.eventH(ev_h);
+		if (!ev_h.Widget_ev(*this, w_mgr)) return;
+	}
+	void Render(Renderer& renderer) override {
+		if (!ge.crash){
+			if (ge.Now_Scene) {
+				float deltaTime = ge.delta_time();
+				try {
+					ge.lua_update(deltaTime);
+				}
+				catch (const std::exception& e) {
+					std::cerr << "Error during scene update: " << e.what() << std::endl;
+					ge.crash = true;
+					ge.error_msg = e.what();
+				}
+				ge.update(renderer);
+				ge.Now_Scene->update_Renderer(renderer);
+				ge.ks.reset();
+				ge.flame_delay();
+			}
+		}
+		else {
+			renderer.Error_msg(ge.error_msg, {0,0,1000,625});
+		}
+	}
+	void Destroyer(Renderer& renderer) override {
+
 	}
 };
