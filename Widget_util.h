@@ -654,7 +654,6 @@ public:
 				renderer.drawText(" Flag " + std::to_string(i) + ": " + std::to_string(palette_p->selected_flags[i]),
 					tileinfo.x, tileinfo.y + i * 20, { 220, 220, 220, 255 });
 			}
-			std::cout << std::endl;
 		}
 		if (active_m) {
 			mapCanvas_p->render();
@@ -708,24 +707,34 @@ public:
 };
 
 class GameEngine_W : public Widget_util {
+	SDL_Renderer* ren = nullptr;
 public:
 	GameEngine ge;
+	void set_path(std::string map_path, std::string script_path, std::string img_path) {
+		ge.map_path = map_path;
+		ge.script_path = script_path;
+		ge.img_path = img_path;
+		ge.renderer = ren;
+	}
 	void init(Renderer& renderer, WidgetManager& w_mgr, const SDL_Rect& rec, int layer, const std::string& name) override {
 		ge.lasttime = SDL_GetTicks();
+		ge.init();
 		widget_rect = rec;
 		widget_name = name;
 		widget_layer = layer;
+		ren = renderer.ren;
 	}
 	void Event(EventHandler& ev_h, WidgetManager& w_mgr) override {
 		ge.eventH(ev_h);
 		if (!ev_h.Widget_ev(*this, w_mgr)) return;
 	}
 	void Render(Renderer& renderer) override {
+		bool runtime_error = false;
 		if (!ge.crash){
 			if (ge.Now_Scene) {
 				float deltaTime = ge.delta_time();
 				try {
-					ge.lua_update(deltaTime);
+					ge.update_scene(deltaTime);
 				}
 				catch (const std::exception& e) {
 					std::cerr << "Error during scene update: " << e.what() << std::endl;

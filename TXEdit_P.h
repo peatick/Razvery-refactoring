@@ -18,6 +18,7 @@ public:
         std::string bef;
         std::string fn_name;
         std::string param;
+		bool match = false;
     };
 
     void reset() {
@@ -58,15 +59,15 @@ public:
         no_save = false;
     }
 
-    Hint_Pl tok(const int& ln, const int& cl) {
+    std::vector< Hint_Pl> tok(const int& ln, const int& cl) {
         // 1. トークン・色の取得
-        if (!Lua_src_Lex.LLSet) return { "","","" };
+        if (!Lua_src_Lex.LLSet) return { { "","","" } };
         lualex::LuaLexerSet& LL = *Lua_src_Lex.LLSet;
         const lualex::LuaLexer& L = *LL.find(Lua_src_Lex.key);
         auto [tokens, colors, types] = L.getLineTokensWithTypes(ln);
         // サイズの一致チェック（範囲外アクセスの防止）
         if (tokens.size() != types.size()) {
-            return {"","",""};
+            return { {"","",""} };
         }
         std::string str_C;
         std::vector<Hint_Pl> Nest_F;
@@ -81,6 +82,7 @@ public:
                 if (LL.isUserDefinedFunctionName(tokens[i])) {
                     Hint_Pl Func_Tips;
                     Func_Tips.bef = str_C;
+					Func_Tips.match = true;
                     for (const auto& LK : LL.allDefinedFunctions()) {
                         for (const auto& fn : LK.second) {
                             if (tokens[i] == fn.name) {
@@ -103,6 +105,29 @@ public:
                         Nest_F.push_back(Func_Tips);
                     }
                 }
+                else {
+                    // 候補
+					for (const auto& LK : LL.allDefinedFunctions()) {
+						for (const auto& fn : LK.second) {
+							if (fn.name.find(tokens[i]) != std::string::npos) {
+								Hint_Pl Func_Tips;
+								Func_Tips.bef = str_C;
+								Func_Tips.fn_name = fn.name;
+								Func_Tips.param = "(";
+								Func_Tips.match = false;
+								// 引数リストの安全な文字列結合
+								for (size_t k = 0; k < fn.params.size(); ++k) {
+									Func_Tips.param += fn.params[k];
+									if (k + 1 < fn.params.size()) {
+										Func_Tips.param += ", ";
+									}
+								}
+								Func_Tips.param += ")";
+								Nest_F.push_back(Func_Tips);
+							}
+						}
+					}
+                }
             }
             // 2. pop_back の安全な呼出し（アンダーフロー防止）
             if (tokens[i] == ")") {
@@ -113,10 +138,8 @@ public:
         }
         // 3. 現在入れ子になっている一番内側の関数シグネチャを返す
         if (!Nest_F.empty()) {
-            return Nest_F.back();
+            return Nest_F;
         }
-        return {"","",""};
+        return {{"","",""}};
     }
-
-
 };

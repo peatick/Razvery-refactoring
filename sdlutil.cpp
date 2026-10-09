@@ -1,5 +1,3 @@
-#include "sdl2/include/SDL.h"
-#include "sdl2/include/SDL_ttf.h"
 #include "sdlutil.h"
 #include <algorithm>
 #include <climits>

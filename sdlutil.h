@@ -1,7 +1,7 @@
 #pragma once
-#include "sdl2/include/SDL.h"
-#include "sdl2/include/SDL_ttf.h"
-#include "sdl2/include/SDL_image.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_image.h>
 #include <algorithm>
 #include <climits>
 #include <deque>

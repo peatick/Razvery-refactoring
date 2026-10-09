@@ -21,7 +21,7 @@ namespace {
     constexpr int kWindowW = kLogicalW * kScale;  // 2880 (= kLogicalWから逆算するので必ず割り切れる)
     constexpr int kWindowH = kLogicalH * kScale;  // 1440
     constexpr int kWallFlagBit = 0;  // 「フラグ0 = 壁」という規約
-    constexpr float kPlayerSize = 6.0f;
+    constexpr float kPlayerSize = 11.0f;
     constexpr float kPlayerSpeed = 90.0f;  // px/sec (タイルセット座標系, 8px=1タイル)
 
     // プレイヤーのAABB(x,y,size,size)が壁タイルと重なるか。

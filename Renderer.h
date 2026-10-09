@@ -37,13 +37,12 @@ public:
 
         SDL_RenderSetLogicalSize(ren, log_W, log_H);
 
-
         font = TTF_OpenFont(fontPath, FONT_SIZE);
         font_sml = TTF_OpenFont(fontPath, FONT_SIZE);
 		font_err = TTF_OpenFont(fontPath, FONT_SIZE);
         if (!font) {
             const char* fb[] = {
-                "fonts\\PixelMplus12-Bold.ttf",
+                "fonts/PixelMplus12-Bold.ttf",
                 "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
                 "/usr/share/fonts/TTF/DejaVuSansMono.ttf",
                 "/System/Library/Fonts/Menlo.ttc",
@@ -56,6 +55,10 @@ public:
             for (int i = 0; fb[i] && !font_sml; ++i) font_sml = TTF_OpenFont(fb[i], FONTSML_SIZE);
             for (int i = 0; fb[i] && !font_err; ++i) font_err = TTF_OpenFont(fb[i], 44);
         }
+        TTF_SetFontKerning(font, 0);
+        TTF_SetFontKerning(font_sml, 0);
+        TTF_SetFontKerning(font_err, 0);
+        TTF_SetFontHinting(font, TTF_HINTING_NONE);
         if (!font) {
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Font: %s", TTF_GetError());
             return false;
@@ -79,11 +82,15 @@ public:
     ;
     int textWidth(const std::string& s) {
         if (s.empty()) return 0;
-        int w = 0, h = 0; TTF_SizeUTF8(font, s.c_str(), &w, &h); return w;
+        int w = 0, h = 0;
+        TTF_SizeUTF8(font, s.c_str(), &w, &h);
+        return w;
     }
     int smltextWidth(const std::string& s) {
         if (s.empty()) return 0;
-        int w = 0, h = 0; TTF_SizeUTF8(font_sml, s.c_str(), &w, &h); return w;
+        SDL_Surface* st = TTF_RenderUTF8_Blended(font_sml, s.c_str(), {0,0,0,0});
+        int w = st->w, h = st->h;
+        return w;
     }
     void drawText(const std::string& s, int x, int y, SDL_Color col) {
         if (s.empty()) return;
@@ -577,6 +584,23 @@ public:
         x += textWidth(H.fn_name);
         drawText(H.param, x + 10, y, {20, 20, 20, 255});
     }
+    void drawInrayHintCandidate(int x, int y, const std::vector< Editor_syntaxed::Hint_Pl>& H) {
+		int y_offset = y;
+        x = x + textWidth(H.back().bef);
+        for (auto H_fn : H) {
+			if (H_fn.fn_name.empty()) continue;
+            int w = textWidth("[CANDIDATE]" + H_fn.fn_name + H_fn.param);
+            SDL_Rect R = { x, y_offset, w + 20, 20 };
+            SDL_SetRenderDrawColor(ren, 200, 200, 200, 255);
+            SDL_RenderFillRect(ren, &R);
+			drawText("[CANDIDATE]", x + 10, y_offset, { 180, 20, 0, 255 });
+			int x_ = x + textWidth("[CANDIDATE]");
+            drawText(H_fn.fn_name, x_ + 10, y_offset, { 87, 128, 6 , 255 });
+			x_ += textWidth(H_fn.fn_name);
+            drawText(H_fn.param, x_ + 10, y_offset, { 20, 20, 20, 255 });
+			y_offset += 20;
+        }
+    }
 
     void drawText_Sy(const lualex::LuaLexer& L, int ln, int x, int y) {
         auto [tokens, colors, types] = L.getLineTokensWithTypes(ln);
@@ -646,16 +670,21 @@ public:
             }
 
             // Caret
-            if (ed.caretOn && row == ed.cursor.row && ed.imeComposing.empty()) {    
+            if (ed.caretOn && row == ed.cursor.row && ed.imeComposing.empty()) {
                 int cx = textWidth(ln.substr(0, ed.cursor.col));
                 SDL_SetRenderDrawColor(ren, colCaret.r, colCaret.g, colCaret.b, 255);
                 SDL_Rect cr = { x0 + cx + ed.TX_Rect.x,y + ed.TX_Rect.y,CURSOR_WIDTH,lineH }; SDL_RenderFillRect(ren, &cr);
             }
         }
-        Editor_syntaxed::Hint_Pl H = Ed_s.tok(ed.cursor.row, ed.cursor.col);
-        drawInrayHint(x0 + ed.TX_Rect.x, cursor_y + 20 + ed.TX_Rect.y, H);
-
-
+        std::vector<Editor_syntaxed::Hint_Pl> H = Ed_s.tok(ed.cursor.row, ed.cursor.col);
+        if (!H.empty()) {
+			if (H.back().match) {
+				drawInrayHint(x0 + ed.TX_Rect.x, cursor_y + ed.TX_Rect.y + 20, H.back());
+            }
+            else {
+				drawInrayHintCandidate(x0 + ed.TX_Rect.x, cursor_y + ed.TX_Rect.y + 20, H);
+            }
+        }
         SDL_RenderSetClipRect(ren, nullptr);
         if (!ed.noLineNo) {
             // Line numbers
@@ -679,7 +708,7 @@ public:
     void Error_msg(std::string msg, SDL_Rect bg_rect) {
 		SDL_SetRenderDrawColor(ren, 0, 60, 180, 255);
 		SDL_RenderFillRect(ren, &bg_rect);
-        SDL_Surface* surf = TTF_RenderUTF8_Solid(font_err, "Script Stop Error!", {220, 220, 220, 255});
+        SDL_Surface* surf = TTF_RenderUTF8_Solid(font_err, "Script Stop Error! (´・ω・`)", {220, 220, 220, 255});
         if (!surf) return;
         SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, surf);
         SDL_FreeSurface(surf);
@@ -695,7 +724,7 @@ public:
 		std::string line;
 		int y_offset = 100;
         while (std::getline(ss, line)) {
-            drawText(line, 10, y_offset, { 220, 220, 220, 255 });
+            drawsmlText(line, 10, y_offset, { 220, 220, 220, 255 });
             y_offset += 20;
         }
     }

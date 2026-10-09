@@ -2,5 +2,8 @@
 Project_Current_Path = D:\newProject\src\SDL2_Editor_Paint\project
 
 [Key_Binds]
-forw = d
-back = a
+r = d
+l = a
+up = w
+down = s
+new_sc = space

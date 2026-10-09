@@ -52,6 +52,9 @@ int main(int argc, char* argv[]) {
 			wm.Stop_MF = true;
             gamemode = true;
 			auto game_engine = wm.window_map["MDGW GameEngine"]->addwidget_t<GameEngine_W>({ 0, 0, 1000, 625 }, 1, "GameEngine");
+            game_engine->set_path(path2string_s(AL.projectpath / AL.mapspath),
+                path2string_s(AL.projectpath / AL.scriptpath),
+                path2string_s(AL.projectpath / AL.imgpath));
 			game_engine->ge.new_scene("entry", path2string_s(AL.projectpath / AL.scriptpath / "entry.lua"));
             game_engine->ge.ks.set_keybinds(AL.binds);
         }

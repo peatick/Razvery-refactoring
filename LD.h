@@ -103,13 +103,25 @@ public:
 			}
 		}
 		std::string template_script = R"(
-		function keyPressed(fnc_str)		
-		function keyPressDown(fnc_str)
-		function keyPressUp(fnc_str)
-		function Sys_Reg(function_)
+		function keyPressed(str)		
+		function keyPressDown(str)
+		function keyPressUp(str)
+		function Sys_Reg(func)
 		function create_entity()
 		function add_newCom(entity_id, data, com_type)
+		function add_newLuaCom(entity_id, data, com_type)
 		function for_each(com_name_table, callback_func)
+		function get_entity_with(...)
+		function move_cam(x, y)
+		function camera_pos()
+		function new_scene(scene_name, lua_script, payload)
+		function load_map(map_name, img_name)
+		function resove_moveX(new_x, dx, dy, size)
+		function resove_moveY(new_y, dx, dy, size)
+		function get_lua_com(entity_id, com_type)
+		function load_sprite(sprite_name, img_name)
+		function draw_sprite(sprite_name, x, y, w, h)
+		function remove_entity(entity_id)
 		)";
 		Lua_src_set.set("template_script", template_script);
 		return true;
